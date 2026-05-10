@@ -56,6 +56,15 @@
         }
         .status-pendiente { background-color: #FEF3C7; color: #D97706; border: 1px solid #FDE68A; }
         .status-retirada { background-color: #D1FAE5; color: #059669; border: 1px solid #A7F3D0; }
+
+        /* Animación para las diapositivas de presentación */
+        @keyframes fadeInSlide {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .slide-anim {
+            animation: fadeInSlide 0.6s ease-out forwards;
+        }
     </style>
 </head>
 <body class="min-h-screen relative">
@@ -63,8 +72,8 @@
     <!-- Notificación Flotante -->
     <div id="notification-container" class="fixed top-0 left-1/2 -translate-x-1/2 z-50 pointer-events-none"></div>
 
-    <!-- Barra de Navegación -->
-    <nav class="bg-turquesa text-white sticky top-0 z-40 shadow-md h-16 flex items-center px-4 md:px-8 justify-between">
+    <!-- Barra de Navegación (Se agregó ID para ocultarla en la intro) -->
+    <nav id="main-nav" class="bg-turquesa text-white sticky top-0 z-40 shadow-md h-16 flex items-center px-4 md:px-8 justify-between transition-opacity duration-300">
         <div onclick="navigateTo('home')" class="flex items-center gap-2 cursor-pointer">
             <div class="bg-amarillo p-1 rounded-lg">
                 <i class="fa-solid fa-graduation-cap text-turquesa text-xl"></i>
@@ -91,7 +100,8 @@
 
     <script>
         // --- ESTADO DE LA APLICACIÓN ---
-        let currentView = 'home';
+        // Cambiamos la vista inicial a 'intro1'
+        let currentView = 'intro1';
         let currentChildId = null;
         let cart = []; 
         let pendingMenuQuantities = {}; 
@@ -409,6 +419,15 @@
         // --- RENDERIZADO DE VISTAS ---
         function render() {
             const app = document.getElementById('app');
+            const mainNav = document.getElementById('main-nav');
+            
+            // Ocultar Navbar durante la presentación inicial
+            if (['intro1', 'intro2', 'intro3'].includes(currentView)) {
+                mainNav.style.display = 'none';
+            } else {
+                mainNav.style.display = 'flex';
+            }
+
             let modalHTML = '';
             let modalDetailsHTML = '';
 
@@ -509,6 +528,84 @@
             }
             
             switch (currentView) {
+                // --- VISTAS DE PRESENTACIÓN (DIAPOSITIVAS) ---
+                case 'intro1':
+                    app.innerHTML = `
+                        <div class="min-h-[85vh] flex flex-col items-center justify-center text-center slide-anim">
+                            <div class="bg-white p-12 md:p-16 rounded-[3rem] shadow-xl border-4 border-turquesa/10 flex flex-col items-center max-w-lg w-full relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-turquesa via-lila to-naranja"></div>
+                                
+                                <!-- Logo Local: Asegúrate de tener 'logo.png' en tu carpeta -->
+                                <img src="./logo.png" alt="Logo Recred" class="w-48 h-48 object-contain mb-6 drop-shadow-sm" onerror="this.src='https://ui-avatars.com/api/?name=Re+Cred&background=FFC107&color=0D6B78&size=200&font-size=0.4'">
+                                
+                                <h1 class="text-6xl md:text-7xl font-urbanist font-bold text-turquesa tracking-tight mb-3">RECRED</h1>
+                                <p class="text-gray-500 mb-10 text-xl font-medium tracking-wide">Gestión inteligente de cantinas escolares</p>
+                                
+                                <button onclick="navigateTo('intro2')" class="w-full bg-turquesa text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-teal-900 transition-all text-xl flex items-center justify-center gap-3">
+                                    Continuar <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    break;
+
+                case 'intro2':
+                    app.innerHTML = `
+                        <div class="min-h-[85vh] flex flex-col items-center justify-center slide-anim">
+                            <div class="max-w-3xl w-full">
+                                <div class="text-turquesa text-5xl mb-6 text-center"><i class="fa-solid fa-bullseye"></i></div>
+                                <h2 class="text-4xl md:text-5xl font-urbanist font-bold text-turquesa mb-8 text-center">Nuestra Visión</h2>
+                                
+                                <div class="bg-white p-8 md:p-10 rounded-[2rem] shadow-sm border border-gray-100 mb-10">
+                                    <p class="text-gray-600 text-lg leading-relaxed">
+                                        [PARTE 1 DE LA MARCA: Reemplaza este texto. Aquí puedes explicar la problemática actual en las cantinas escolares (filas largas, manejo de efectivo por niños, desconocimiento de los padres sobre qué comen sus hijos) y cómo Recred nace para digitalizar y asegurar este proceso.]
+                                    </p>
+                                </div>
+                                
+                                <div class="flex justify-center gap-4">
+                                    <button onclick="navigateTo('intro1')" class="bg-gray-100 text-gray-600 font-bold py-4 px-8 rounded-2xl shadow-sm hover:bg-gray-200 transition-all text-lg flex items-center gap-2">
+                                        <i class="fa-solid fa-arrow-left"></i> Atrás
+                                    </button>
+                                    <button onclick="navigateTo('intro3')" class="bg-naranja text-white font-bold py-4 px-12 rounded-2xl shadow-lg hover:bg-orange-600 transition-all text-lg flex items-center gap-2">
+                                        Continuar <i class="fa-solid fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+
+                case 'intro3':
+                    app.innerHTML = `
+                        <div class="min-h-[85vh] flex flex-col items-center justify-center slide-anim">
+                            <div class="max-w-3xl w-full">
+                                <div class="text-lila text-5xl mb-6 text-center"><i class="fa-solid fa-shield-halved"></i></div>
+                                <h2 class="text-4xl md:text-5xl font-urbanist font-bold text-lila mb-8 text-center">Salud y Seguridad</h2>
+                                
+                                <div class="bg-white p-8 md:p-10 rounded-[2rem] shadow-sm border border-gray-100 mb-10 relative overflow-hidden">
+                                    <div class="absolute right-0 top-0 opacity-5 text-lila text-[15rem] -mt-10 -mr-10 pointer-events-none">
+                                        <i class="fa-solid fa-apple-whole"></i>
+                                    </div>
+                                    <p class="text-gray-600 text-lg leading-relaxed relative z-10">
+                                        [PARTE 2 DE LA MARCA: Reemplaza este texto. Aquí puedes profundizar sobre la innovación en las restricciones alimentarias (Celíacos, Diabéticos, Alergias), destacando que el sistema protege la salud del alumno bloqueando compras peligrosas y brindando total tranquilidad a la familia.]
+                                    </p>
+                                </div>
+                                
+                                <div class="flex justify-center gap-4">
+                                    <button onclick="navigateTo('intro2')" class="bg-gray-100 text-gray-600 font-bold py-4 px-8 rounded-2xl shadow-sm hover:bg-gray-200 transition-all text-lg flex items-center gap-2">
+                                        <i class="fa-solid fa-arrow-left"></i> Atrás
+                                    </button>
+                                    <button onclick="navigateTo('home')" class="bg-turquesa text-white font-bold py-4 px-12 rounded-2xl shadow-lg hover:bg-teal-900 transition-all text-lg flex items-center gap-3">
+                                        Ingresar a la Plataforma <i class="fa-solid fa-rocket"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+
+                // --- FIN DE VISTAS DE PRESENTACIÓN ---
+
                 case 'home':
                     const groupedChildren = children.reduce((acc, child) => {
                         if (!acc[child.school]) acc[child.school] = [];
