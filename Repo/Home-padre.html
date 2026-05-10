@@ -44,6 +44,18 @@
             color: var(--naranja) !important;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
+
+        /* Estilo para los tags de estado */
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-pendiente { background-color: #FEF3C7; color: #D97706; border: 1px solid #FDE68A; }
+        .status-retirada { background-color: #D1FAE5; color: #059669; border: 1px solid #A7F3D0; }
     </style>
 </head>
 <body class="min-h-screen relative">
@@ -84,6 +96,16 @@
         let cart = []; 
         let pendingMenuQuantities = {}; 
         let showChildModal = false; 
+        
+        // Estado del checkout temporal
+        let checkoutDate = '';
+        let checkoutBreak = '';
+        let lastCheckoutCodes = [];
+        let lastPurchaseHasNegative = false;
+
+        // Estado del Modal de Detalles
+        let selectedPurchaseId = null;
+
         let restrictions = {
             1: { noTacc: false }, 
             2: { noTacc: false }, 
@@ -92,13 +114,8 @@
         
         // --- LISTA DE FERIADOS (Formato YYYY-MM-DD) ---
         const feriados = [
-            '2026-05-01', // Día del trabajador
-            '2026-05-25', // Revolución de Mayo
-            '2026-06-20', // Día de la Bandera
-            '2026-07-09', // Independencia
-            '2026-09-21', // Día del estudiante
-            '2026-10-12', // Diversidad Cultural
-            '2026-11-20'  // Soberanía Nacional
+            '2026-05-01', '2026-05-25', '2026-06-20', '2026-07-09', 
+            '2026-09-21', '2026-10-12', '2026-11-20'
         ];
 
         const children = [
@@ -124,6 +141,30 @@
             ]
         };
 
+        // --- BASE DE DATOS DE COMPRAS (Mock) ---
+        let purchases = [
+            {
+                id: 10001,
+                childId: 1,
+                date: '2026-05-08',
+                breakTime: '1er Recreo',
+                total: 1200,
+                status: 'Retirada',
+                code: 'TIGRE',
+                items: [{ name: "Sándwich de Jamón y Queso", quantity: 1, price: 1200, img: productsBySchool["Instituto San José"][0].img }]
+            },
+            {
+                id: 10002,
+                childId: 2,
+                date: '2026-05-15', // Fecha futura de ejemplo
+                breakTime: '2do Recreo',
+                total: 850,
+                status: 'Pendiente',
+                code: 'LOBO',
+                items: [{ name: "Cookies de Chocolate", quantity: 1, price: 850, img: productsBySchool["Instituto San José"][1].img }]
+            }
+        ];
+
         // --- FUNCIONES DE FECHA ---
         function getTodayString() {
             const today = new Date();
@@ -133,22 +174,22 @@
             return `${year}-${month}-${day}`;
         }
 
+        function formatDisplayDate(dateStr) {
+            const [y, m, d] = dateStr.split('-');
+            return `${d}/${m}/${y}`;
+        }
+
         function isFeriadoOFinDeSemana(dateString) {
             const [y, m, d] = dateString.split('-');
-            const date = new Date(y, m - 1, d); // Usar fecha local
+            const date = new Date(y, m - 1, d);
             const dayOfWeek = date.getDay();
-            
-            // 0 = Domingo, 6 = Sábado
             if (dayOfWeek === 0 || dayOfWeek === 6) return true;
             if (feriados.includes(dateString)) return true;
-            
             return false;
         }
 
         function getNextValidDateStr(startDateStr = null) {
             let date = startDateStr ? new Date(startDateStr + 'T00:00:00') : new Date();
-            
-            // Para asegurar que no iteramos desde el pasado si se provee una fecha vieja
             const today = new Date();
             today.setHours(0,0,0,0);
             if(date < today) date = new Date();
@@ -159,10 +200,7 @@
                 const day = String(date.getDate()).padStart(2, '0');
                 const dateStr = `${year}-${month}-${day}`;
 
-                if (!isFeriadoOFinDeSemana(dateStr)) {
-                    return dateStr;
-                }
-                // Si es inválida, sumamos un día y repetimos
+                if (!isFeriadoOFinDeSemana(dateStr)) return dateStr;
                 date.setDate(date.getDate() + 1);
             }
         }
@@ -190,11 +228,15 @@
                 currentChildId = params.childId;
                 pendingMenuQuantities = {}; 
             }
+            // Si vamos global, reseteamos el hijo para mostrar todos (ej. navbar)
+            if (view === 'movements' && (!params || !params.childId)) {
+                currentChildId = null;
+            }
             render();
             window.scrollTo(0,0);
         }
 
-        // --- FUNCIONES DE MODAL DE ALUMNO ---
+        // --- FUNCIONES DE MODAL ---
         function openChildModal() { showChildModal = true; render(); }
         function closeChildModal() { showChildModal = false; render(); }
         function switchChild(newId) {
@@ -204,7 +246,10 @@
             render();
         }
 
-        // --- FUNCIONES DE CARRITO Y CANTIDAD ---
+        function openPurchaseDetails(id) { selectedPurchaseId = id; render(); }
+        function closePurchaseDetails() { selectedPurchaseId = null; render(); }
+
+        // --- FUNCIONES DE CARRITO Y CHECKOUT ---
         function changeMenuQuantity(productId, delta) {
             const cartItem = cart.find(i => i.id === productId && i.childId === currentChildId);
             if (cartItem) {
@@ -252,7 +297,6 @@
 
         function emptyCart() {
             cart = [];
-            render();
             updateCartUI();
         }
 
@@ -271,10 +315,10 @@
             const bgColor = isWarning ? 'bg-naranja' : 'bg-green-500';
             const icon = isWarning ? 'fa-triangle-exclamation' : 'fa-circle-check';
             
-            notif.className = `notification mt-4 ${bgColor} text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3 font-semibold`;
+            notif.className = `notification mt-4 ${bgColor} text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3 font-semibold z-50`;
             notif.innerHTML = `<i class="fa-solid ${icon}"></i> ${message}`;
             container.appendChild(notif);
-            setTimeout(() => notif.remove(), 4000); // Dar más tiempo a las alertas para leerse
+            setTimeout(() => notif.remove(), 4000); 
         }
 
         function generateWithdrawalCode() {
@@ -286,7 +330,6 @@
             return animals[Math.floor(Math.random() * animals.length)];
         }
 
-        // --- FUNCIONES DE SALDOS ---
         function formatCurrency(amount) {
             const isNegative = amount < 0;
             const absAmount = Math.abs(amount);
@@ -296,13 +339,9 @@
         function getBalanceWarnings() {
             const warnings = [];
             const spentPerChild = {};
-            
-            // Calculamos el total gastado por cada hijo en el carrito
             cart.forEach(item => {
                 spentPerChild[item.childId] = (spentPerChild[item.childId] || 0) + (item.price * item.quantity);
             });
-            
-            // Verificamos contra el saldo actual
             for (const childId in spentPerChild) {
                 const child = children.find(c => c.id == childId);
                 const newBalance = child.balance - spentPerChild[childId];
@@ -313,11 +352,63 @@
             return warnings;
         }
 
+        // --- FLUJO DE COMPRA ---
+        function goToConfirm() {
+            checkoutDate = document.getElementById('order-date')?.value || getNextValidDateStr();
+            checkoutBreak = document.getElementById('order-break')?.value || '1er Recreo';
+            navigateTo('confirm');
+        }
+
+        function processPurchase() {
+            const spentPerChild = {};
+            const groupedCart = cart.reduce((acc, item) => {
+                if (!acc[item.childId]) acc[item.childId] = [];
+                acc[item.childId].push(item);
+                spentPerChild[item.childId] = (spentPerChild[item.childId] || 0) + (item.price * item.quantity);
+                return acc;
+            }, {});
+
+            lastCheckoutCodes = [];
+            lastPurchaseHasNegative = false;
+
+            Object.keys(groupedCart).forEach(childId => {
+                const child = children.find(c => c.id == childId);
+                const childTotal = spentPerChild[childId];
+                const code = generateWithdrawalCode().toUpperCase();
+                
+                // Actualizar saldo
+                if (child) {
+                    child.balance -= childTotal;
+                    if (child.balance < 0) lastPurchaseHasNegative = true;
+                }
+
+                // Guardar Ticket de Compra
+                const newPurchase = {
+                    id: Date.now() + Math.floor(Math.random() * 1000),
+                    childId: parseInt(childId),
+                    date: checkoutDate,
+                    breakTime: checkoutBreak,
+                    total: childTotal,
+                    status: 'Pendiente',
+                    code: code,
+                    items: [...groupedCart[childId]]
+                };
+                purchases.unshift(newPurchase); // Agregar al inicio (más reciente primero)
+
+                lastCheckoutCodes.push({ childName: child.name, img: child.img, code: code });
+            });
+
+            emptyCart();
+            navigateTo('success');
+        }
+
         // --- RENDERIZADO DE VISTAS ---
         function render() {
             const app = document.getElementById('app');
             let modalHTML = '';
+            let modalDetailsHTML = '';
 
+            // Modal Selector Alumno
             if (showChildModal) {
                 modalHTML = `
                     <div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
@@ -337,6 +428,76 @@
                                         ${c.id === currentChildId ? '<i class="fa-solid fa-circle-check text-turquesa text-lg"></i>' : '<i class="fa-solid fa-chevron-right text-gray-300 group-hover:text-naranja"></i>'}
                                     </button>
                                 `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Modal Detalles Compra
+            if (selectedPurchaseId) {
+                const p = purchases.find(pur => pur.id === selectedPurchaseId);
+                const child = children.find(c => c.id === p.childId);
+                const statusClass = p.status === 'Pendiente' ? 'status-pendiente' : 'status-retirada';
+                
+                modalDetailsHTML = `
+                    <div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                        <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
+                            <div class="flex justify-between items-center mb-4 shrink-0">
+                                <div>
+                                    <h3 class="text-xl font-bold text-turquesa">Detalles del Pedido</h3>
+                                    <p class="text-xs text-gray-500">Orden #${p.id}</p>
+                                </div>
+                                <button onclick="closePurchaseDetails()" class="text-gray-400 hover:text-gray-600 bg-gray-100 w-8 h-8 rounded-full flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            
+                            <div class="overflow-y-auto pr-2 pb-4">
+                                <div class="bg-gray-50 p-4 rounded-2xl flex items-center gap-3 mb-6">
+                                    <img src="${child.img}" class="w-10 h-10 rounded-full object-cover">
+                                    <div>
+                                        <p class="text-[10px] font-bold text-gray-400 uppercase">Alumno</p>
+                                        <p class="font-bold text-gray-800 text-sm">${child.name}</p>
+                                    </div>
+                                    <div class="ml-auto text-right">
+                                        <span class="status-badge ${statusClass}">${p.status}</span>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4 mb-6">
+                                    <div class="border border-gray-100 rounded-xl p-3 text-center shadow-sm">
+                                        <p class="text-[10px] font-bold text-gray-400 uppercase"><i class="fa-regular fa-calendar mr-1"></i> Fecha Retiro</p>
+                                        <p class="font-bold text-turquesa">${formatDisplayDate(p.date)}</p>
+                                    </div>
+                                    <div class="border border-gray-100 rounded-xl p-3 text-center shadow-sm">
+                                        <p class="text-[10px] font-bold text-gray-400 uppercase"><i class="fa-regular fa-clock mr-1"></i> Recreo</p>
+                                        <p class="font-bold text-turquesa">${p.breakTime}</p>
+                                    </div>
+                                </div>
+
+                                <h4 class="font-bold text-gray-700 border-b pb-2 mb-4 text-sm">Ítems Comprados</h4>
+                                <div class="space-y-3 mb-6">
+                                    ${p.items.map(item => `
+                                        <div class="flex items-center gap-3">
+                                            <img src="${item.img}" class="w-10 h-10 rounded-lg object-cover bg-gray-100 border border-gray-200">
+                                            <div class="flex-grow">
+                                                <p class="text-sm font-bold text-gray-800 leading-tight">${item.name}</p>
+                                                <p class="text-xs text-gray-500">${item.quantity} x $${item.price.toLocaleString('es-AR')}</p>
+                                            </div>
+                                            <span class="font-bold text-turquesa text-sm">$${(item.quantity * item.price).toLocaleString('es-AR')}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            
+                            <div class="border-t border-dashed pt-4 shrink-0">
+                                <div class="flex justify-between items-center mb-4">
+                                    <span class="text-gray-500 font-medium">Total de la Orden</span>
+                                    <span class="text-2xl font-bold text-turquesa">$${p.total.toLocaleString('es-AR')}</span>
+                                </div>
+                                <div class="bg-turquesa text-white p-3 rounded-xl text-center border-2 border-turquesa/20">
+                                    <p class="text-[10px] uppercase font-bold text-turquesa-200 opacity-80 tracking-widest">Palabra de Retiro</p>
+                                    <p class="text-2xl font-bold tracking-wider">${p.code}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -379,8 +540,8 @@
                                                     </div>
                                                     <div class="grid grid-cols-2 gap-2 mb-4">
                                                         <button class="btn-alumno-hover p-2 rounded-lg text-xs font-bold transition-all"><i class="fa-solid fa-plus mr-1"></i> Acreditar</button>
-                                                        <button class="btn-alumno-hover p-2 rounded-lg text-xs font-bold transition-all"><i class="fa-solid fa-list mr-1"></i> Movimientos</button>
-                                                        <button class="btn-alumno-hover p-2 rounded-lg text-xs font-bold transition-all"><i class="fa-solid fa-clock-rotate-left mr-1"></i> Pendientes</button>
+                                                        <button onclick="navigateTo('movements', {childId: ${child.id}})" class="btn-alumno-hover p-2 rounded-lg text-xs font-bold transition-all"><i class="fa-solid fa-list mr-1"></i> Movimientos</button>
+                                                        <button onclick="navigateTo('pending', {childId: ${child.id}})" class="btn-alumno-hover p-2 rounded-lg text-xs font-bold transition-all"><i class="fa-solid fa-clock-rotate-left mr-1"></i> Pendientes</button>
                                                         <button onclick="navigateTo('restrictions', {childId: ${child.id}})" class="btn-alumno-hover p-2 rounded-lg text-xs font-bold transition-all border border-lila/10"><i class="fa-solid fa-shield-halved mr-1"></i> Restricciones</button>
                                                     </div>
                                                     <button onclick="navigateTo('canteen', {childId: ${child.id}})" class="w-full bg-naranja text-white font-bold py-2 rounded-xl shadow-md hover:bg-orange-600 transition-all">Ir a la Cantina</button>
@@ -390,6 +551,93 @@
                                     </div>
                                 </div>
                             `).join('')}
+                        </div>
+                    `;
+                    break;
+
+                // Vistas de Movimientos y Pendientes
+                case 'movements':
+                case 'pending':
+                    const isPendingView = currentView === 'pending';
+                    
+                    // Si hay childId, filtramos por alumno, si no, mostramos todos
+                    let viewChild = null;
+                    let filteredPurchases = purchases;
+
+                    if (currentChildId) {
+                        viewChild = children.find(c => c.id === currentChildId);
+                        filteredPurchases = filteredPurchases.filter(p => p.childId === currentChildId);
+                    }
+
+                    if (isPendingView) {
+                        filteredPurchases = filteredPurchases.filter(p => p.status === 'Pendiente');
+                    }
+
+                    const pageTitle = isPendingView ? 'Compras Pendientes de Retiro' : 'Historial de Movimientos';
+
+                    app.innerHTML = `
+                        ${modalDetailsHTML}
+                        <div class="max-w-4xl mx-auto">
+                            <button onclick="navigateTo('home')" class="mb-4 text-turquesa font-bold flex items-center hover:underline"><i class="fa-solid fa-arrow-left mr-2"></i> Volver al Inicio</button>
+                            
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                                <div>
+                                    <h2 class="text-3xl font-bold text-turquesa">${pageTitle}</h2>
+                                    ${viewChild ? `<p class="text-gray-500 mt-1 flex items-center gap-2"><img src="${viewChild.img}" class="w-5 h-5 rounded-full object-cover"> Registros de <strong>${viewChild.name}</strong></p>` : `<p class="text-gray-500 mt-1">Registros de todos tus hijos</p>`}
+                                </div>
+                            </div>
+
+                            <div class="space-y-4">
+                                ${filteredPurchases.length === 0 ? `
+                                    <div class="bg-white rounded-3xl p-12 text-center border-2 border-dashed border-gray-200">
+                                        <div class="w-20 h-20 bg-gray-50 text-gray-300 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl">
+                                            <i class="fa-solid ${isPendingView ? 'fa-clock-rotate-left' : 'fa-list'}"></i>
+                                        </div>
+                                        <p class="text-gray-500 text-lg">No se encontraron registros ${isPendingView ? 'pendientes' : ''}.</p>
+                                    </div>
+                                ` : filteredPurchases.map(p => {
+                                    const pChild = children.find(c => c.id === p.childId);
+                                    const statusClass = p.status === 'Pendiente' ? 'status-pendiente' : 'status-retirada';
+                                    
+                                    return `
+                                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:shadow-md">
+                                        
+                                        <div class="flex items-center gap-4 md:w-1/3">
+                                            ${!viewChild ? `<img src="${pChild.img}" class="w-12 h-12 rounded-full object-cover border border-gray-200" title="${pChild.name}">` : ''}
+                                            <div>
+                                                <div class="flex items-center gap-2 mb-1">
+                                                    <span class="status-badge ${statusClass}">${p.status}</span>
+                                                    <span class="text-xs text-gray-400 font-bold">#${p.id}</span>
+                                                </div>
+                                                <p class="font-bold text-gray-800">${p.items.length} ${p.items.length === 1 ? 'ítem' : 'ítems'}</p>
+                                                ${!viewChild ? `<p class="text-xs text-gray-500">${pChild.name}</p>` : ''}
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-4 md:w-1/3 text-sm">
+                                            <div>
+                                                <p class="text-[10px] text-gray-400 uppercase font-bold">Fecha Retiro</p>
+                                                <p class="font-semibold text-gray-700 flex items-center gap-1"><i class="fa-regular fa-calendar text-turquesa"></i> ${formatDisplayDate(p.date)}</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-[10px] text-gray-400 uppercase font-bold">Momento</p>
+                                                <p class="font-semibold text-gray-700 flex items-center gap-1"><i class="fa-regular fa-clock text-turquesa"></i> ${p.breakTime}</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex items-center justify-between md:justify-end gap-6 md:w-1/3 border-t md:border-t-0 pt-4 md:pt-0 mt-2 md:mt-0">
+                                            <div class="text-left md:text-right">
+                                                <p class="text-[10px] text-gray-400 uppercase font-bold">Total</p>
+                                                <p class="font-bold text-turquesa text-lg">$${p.total.toLocaleString('es-AR')}</p>
+                                            </div>
+                                            <button onclick="openPurchaseDetails(${p.id})" class="bg-gray-50 hover:bg-turquesa hover:text-white text-turquesa font-bold py-2 px-4 rounded-xl transition-all border border-gray-200 hover:border-turquesa text-sm whitespace-nowrap">
+                                                Ver Detalles
+                                            </button>
+                                        </div>
+                                    </div>
+                                    `;
+                                }).join('')}
+                            </div>
                         </div>
                     `;
                     break;
@@ -512,11 +760,9 @@
                         return acc;
                     }, {});
 
-                    // Variables para la fecha validada
                     const todayStr = getTodayString();
                     const nextValidDate = getNextValidDateStr();
 
-                    // Comprobar saldos para mostrar advertencia
                     const cartWarnings = getBalanceWarnings();
                     const cartWarningsHTML = cartWarnings.length > 0 ? `
                         <div class="bg-orange-50 border border-naranja text-naranja p-5 rounded-3xl shadow-sm">
@@ -601,7 +847,7 @@
                                     </div>
 
                                     <div class="flex flex-col gap-3">
-                                        <button onclick="${cart.length > 0 ? 'navigateTo(\'confirm\')' : ''}" class="w-full bg-turquesa text-white font-bold py-4 rounded-2xl shadow-lg transition-all ${cart.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-teal-900 active:scale-[0.98]'}" ${cart.length === 0 ? 'disabled' : ''}>Pagar Orden Completa</button>
+                                        <button onclick="${cart.length > 0 ? 'goToConfirm()' : ''}" class="w-full bg-turquesa text-white font-bold py-4 rounded-2xl shadow-lg transition-all ${cart.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-teal-900 active:scale-[0.98]'}" ${cart.length === 0 ? 'disabled' : ''}>Pagar Orden Completa</button>
                                         <div class="grid grid-cols-2 gap-3">
                                             <button onclick="emptyCart()" class="bg-gray-100 text-gray-600 font-bold py-3 rounded-xl hover:bg-gray-200 transition-all text-xs">Vaciar Carrito</button>
                                             <button onclick="navigateTo('home')" class="bg-lila text-white font-bold py-3 rounded-xl hover:bg-purple-600 transition-all text-xs">${cart.length === 0 ? 'Volver al Inicio' : 'Seguir comprando'}</button>
@@ -615,8 +861,6 @@
 
                 case 'confirm':
                     const cTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-                    const dVal = document.getElementById('order-date')?.value || getNextValidDateStr();
-                    const bVal = document.getElementById('order-break')?.value || '1er Recreo';
                     
                     const groupedConfirm = cart.reduce((acc, item) => {
                         if (!acc[item.childId]) acc[item.childId] = [];
@@ -624,7 +868,6 @@
                         return acc;
                     }, {});
 
-                    // Advertencias en pantalla de confirmación
                     const confirmWarnings = getBalanceWarnings();
                     const confirmWarningsHTML = confirmWarnings.length > 0 ? `
                         <div class="bg-orange-50 border border-naranja text-naranja p-5 rounded-2xl mb-6 shadow-sm relative z-10">
@@ -647,12 +890,12 @@
                                 <div class="bg-gray-50 p-5 rounded-2xl flex justify-around mb-8 text-center">
                                     <div>
                                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Fecha de Retiro</p>
-                                        <p class="font-bold text-gray-800">${dVal}</p>
+                                        <p class="font-bold text-gray-800">${formatDisplayDate(checkoutDate)}</p>
                                     </div>
                                     <div class="w-px bg-gray-200"></div>
                                     <div>
                                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Momento</p>
-                                        <p class="font-bold text-gray-800">${bVal}</p>
+                                        <p class="font-bold text-gray-800">${checkoutBreak}</p>
                                     </div>
                                 </div>
 
@@ -684,7 +927,7 @@
                                 </div>
 
                                 <div class="flex flex-col gap-3">
-                                    <button onclick="navigateTo('success')" class="w-full bg-turquesa text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-teal-900 transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-lock"></i> Confirmar y Pagar</button>
+                                    <button onclick="processPurchase()" class="w-full bg-turquesa text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-teal-900 transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-lock"></i> Confirmar y Pagar</button>
                                     <div class="grid grid-cols-2 gap-3">
                                         <button onclick="emptyCart(); navigateTo('cart');" class="bg-gray-100 text-gray-600 font-bold py-3 rounded-xl text-xs hover:bg-gray-200 transition-all">Vaciar Carrito</button>
                                         <button onclick="navigateTo('home')" class="bg-lila text-white font-bold py-3 rounded-xl text-xs hover:bg-purple-600 transition-all">Volver al Inicio</button>
@@ -696,42 +939,18 @@
                     break;
 
                 case 'success':
-                    // 1. Descontar saldos reales
-                    let hasNegative = false;
-                    const spentPerChild = {};
-                    cart.forEach(item => {
-                        spentPerChild[item.childId] = (spentPerChild[item.childId] || 0) + (item.price * item.quantity);
-                    });
-                    
-                    Object.keys(spentPerChild).forEach(childId => {
-                        const child = children.find(c => c.id == childId);
-                        if (child) {
-                            child.balance -= spentPerChild[childId];
-                            if (child.balance < 0) hasNegative = true;
-                        }
-                    });
-
-                    // 2. Generar códigos
-                    const kidsInOrder = [...new Set(cart.map(item => item.childId))];
-                    const codesHTML = kidsInOrder.map(cId => {
-                        const child = children.find(c => c.id == cId);
-                        const code = generateWithdrawalCode().toUpperCase();
-                        return `
-                            <div class="bg-gray-50 p-4 rounded-xl mb-3 flex justify-between items-center border border-gray-100">
-                                <div class="flex items-center gap-3">
-                                    <img src="${child.img}" class="w-10 h-10 rounded-full object-cover">
-                                    <span class="font-bold text-gray-700">${child.name}</span>
-                                </div>
-                                <div class="text-right">
-                                    <span class="block text-[10px] text-gray-400 uppercase font-bold">Código</span>
-                                    <span class="font-bold text-naranja text-lg">${code}</span>
-                                </div>
+                    const codesHTML = lastCheckoutCodes.map(data => `
+                        <div class="bg-gray-50 p-4 rounded-xl mb-3 flex justify-between items-center border border-gray-100">
+                            <div class="flex items-center gap-3">
+                                <img src="${data.img}" class="w-10 h-10 rounded-full object-cover">
+                                <span class="font-bold text-gray-700">${data.childName}</span>
                             </div>
-                        `;
-                    }).join('');
-
-                    cart = []; 
-                    updateCartUI();
+                            <div class="text-right">
+                                <span class="block text-[10px] text-gray-400 uppercase font-bold">Código</span>
+                                <span class="font-bold text-naranja text-lg">${data.code}</span>
+                            </div>
+                        </div>
+                    `).join('');
 
                     app.innerHTML = `
                         <div class="max-w-xl mx-auto py-8">
@@ -753,8 +972,8 @@
                             </div>
 
                             <div class="space-y-4">
-                                ${hasNegative ? `<button onclick="navigateTo('home')" class="w-full bg-naranja text-white font-bold py-4 rounded-2xl shadow-md hover:bg-orange-600 transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-wallet"></i> Cargar Saldo Ahora</button>` : ''}
-                                <button onclick="navigateTo('movements')" class="w-full bg-turquesa text-white font-bold py-4 rounded-2xl shadow-md hover:bg-teal-900 transition-all">Ver compras pendientes de retiro</button>
+                                ${lastPurchaseHasNegative ? `<button onclick="navigateTo('home')" class="w-full bg-naranja text-white font-bold py-4 rounded-2xl shadow-md hover:bg-orange-600 transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-wallet"></i> Cargar Saldo Ahora</button>` : ''}
+                                <button onclick="navigateTo('pending')" class="w-full bg-turquesa text-white font-bold py-4 rounded-2xl shadow-md hover:bg-teal-900 transition-all">Ver compras pendientes de retiro</button>
                                 <button onclick="navigateTo('home')" class="w-full bg-white text-turquesa border border-turquesa font-bold py-4 rounded-2xl hover:bg-turquesa/5 transition-all">Volver al Inicio</button>
                             </div>
                         </div>
