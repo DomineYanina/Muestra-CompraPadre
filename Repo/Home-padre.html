@@ -101,7 +101,7 @@
         let checkoutDate = '';
         let checkoutBreak = '';
         let lastCheckoutCodes = [];
-        let lastPurchaseHasNegative = false;
+        let lastNegativeChildId = null; // Cambiado para saber exactamente qué hijo quedó en negativo
 
         // Estado del Modal de Detalles
         let selectedPurchaseId = null;
@@ -370,7 +370,7 @@
             }, {});
 
             lastCheckoutCodes = [];
-            lastPurchaseHasNegative = false;
+            lastNegativeChildId = null;
 
             Object.keys(groupedCart).forEach(childId => {
                 const child = children.find(c => c.id == childId);
@@ -380,7 +380,10 @@
                 // Actualizar saldo
                 if (child) {
                     child.balance -= childTotal;
-                    if (child.balance < 0) lastPurchaseHasNegative = true;
+                    // Guardar el ID del primer hijo que quede en negativo
+                    if (child.balance < 0 && !lastNegativeChildId) {
+                        lastNegativeChildId = child.id;
+                    }
                 }
 
                 // Guardar Ticket de Compra
@@ -540,7 +543,7 @@
                                                         </div>
                                                     </div>
                                                     <div class="grid grid-cols-2 gap-2 mb-4">
-                                                        <button class="btn-alumno-hover p-2 rounded-lg text-xs font-bold transition-all"><i class="fa-solid fa-plus mr-1"></i> Acreditar</button>
+                                                        <button onclick="navigateTo('recharge', {childId: ${child.id}})" class="btn-alumno-hover p-2 rounded-lg text-xs font-bold transition-all"><i class="fa-solid fa-plus mr-1"></i> Acreditar</button>
                                                         <button onclick="navigateTo('movements', {childId: ${child.id}})" class="btn-alumno-hover p-2 rounded-lg text-xs font-bold transition-all"><i class="fa-solid fa-list mr-1"></i> Movimientos</button>
                                                         <button onclick="navigateTo('pending', {childId: ${child.id}})" class="btn-alumno-hover p-2 rounded-lg text-xs font-bold transition-all"><i class="fa-solid fa-clock-rotate-left mr-1"></i> Pendientes</button>
                                                         <button onclick="navigateTo('restrictions', {childId: ${child.id}})" class="btn-alumno-hover p-2 rounded-lg text-xs font-bold transition-all border border-lila/10"><i class="fa-solid fa-shield-halved mr-1"></i> Restricciones</button>
@@ -719,6 +722,40 @@
 
                                 </div>
                                 <button onclick="navigateTo('home')" class="w-full mt-8 bg-turquesa text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-teal-900 transition-all">Guardar Cambios</button>
+                            </div>
+                        </div>
+                    `;
+                    break;
+
+                case 'recharge':
+                    const rechargeChild = children.find(c => c.id === currentChildId);
+                    
+                    app.innerHTML = `
+                        <div class="max-w-2xl mx-auto py-12">
+                            <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 text-center relative overflow-hidden">
+                                <!-- Detalle visual superior -->
+                                <div class="absolute top-0 left-0 w-full h-2 bg-[#009EE3]"></div> 
+                                
+                                <div class="w-20 h-20 bg-blue-50 text-[#009EE3] rounded-full flex items-center justify-center text-4xl mx-auto mb-6 shadow-sm">
+                                    <i class="fa-solid fa-hand-holding-dollar"></i>
+                                </div>
+                                
+                                <h2 class="text-3xl font-bold text-gray-800 mb-2">Acreditación de Saldo</h2>
+                                <p class="text-gray-500 mb-8">Alumno seleccionado: <strong class="text-turquesa">${rechargeChild.name}</strong></p>
+                                
+                                <div class="bg-gray-50 p-6 rounded-2xl mb-8 text-left border border-gray-100">
+                                    <h3 class="font-bold text-turquesa mb-3 flex items-center gap-2"><i class="fa-solid fa-plug-circle-bolt"></i> Integración con Mercado Pago API</h3>
+                                    <p class="text-gray-600 text-sm leading-relaxed mb-3">
+                                        En la versión de producción de Recred, esta sección implementará el <strong>Checkout Pro de Mercado Pago</strong>. 
+                                    </p>
+                                    <p class="text-gray-600 text-sm leading-relaxed">
+                                        Esto permitirá a los padres realizar pagos con tarjetas de crédito, débito o dinero en cuenta bajo los más altos estándares de seguridad. Una vez que la pasarela confirme la transacción mediante webhooks, el sistema actualizará de forma instantánea y automática el saldo en la cuenta del alumno, permitiéndole operar en la cantina sin demoras ni validaciones manuales por parte del colegio.
+                                    </p>
+                                </div>
+                                
+                                <button onclick="navigateTo('home')" class="w-full sm:w-auto px-10 bg-turquesa text-white font-bold py-3 rounded-xl hover:bg-teal-900 transition-all shadow-sm flex items-center justify-center gap-2 mx-auto">
+                                    <i class="fa-solid fa-arrow-left"></i> Volver a Home
+                                </button>
                             </div>
                         </div>
                     `;
@@ -1036,7 +1073,7 @@
                             </div>
 
                             <div class="space-y-4">
-                                ${lastPurchaseHasNegative ? `<button onclick="navigateTo('home')" class="w-full bg-naranja text-white font-bold py-4 rounded-2xl shadow-md hover:bg-orange-600 transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-wallet"></i> Cargar Saldo Ahora</button>` : ''}
+                                ${lastNegativeChildId ? `<button onclick="navigateTo('recharge', {childId: ${lastNegativeChildId}})" class="w-full bg-naranja text-white font-bold py-4 rounded-2xl shadow-md hover:bg-orange-600 transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-wallet"></i> Cargar Saldo Ahora</button>` : ''}
                                 <button onclick="navigateTo('pending')" class="w-full bg-turquesa text-white font-bold py-4 rounded-2xl shadow-md hover:bg-teal-900 transition-all">Ver compras pendientes de retiro</button>
                                 <button onclick="navigateTo('home')" class="w-full bg-white text-turquesa border border-turquesa font-bold py-4 rounded-2xl hover:bg-turquesa/5 transition-all">Volver al Inicio</button>
                             </div>
