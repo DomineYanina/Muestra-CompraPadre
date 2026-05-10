@@ -46,7 +46,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen">
+<body class="min-h-screen relative">
 
     <!-- Notificación Flotante -->
     <div id="notification-container" class="fixed top-0 left-1/2 -translate-x-1/2 z-50 pointer-events-none"></div>
@@ -75,13 +75,15 @@
     </nav>
 
     <!-- Contenedor Principal -->
-    <main id="app" class="max-w-6xl mx-auto p-4 md:p-8"></main>
+    <main id="app" class="max-w-7xl mx-auto p-4 md:p-8"></main>
 
     <script>
         // --- ESTADO DE LA APLICACIÓN ---
         let currentView = 'home';
         let currentChildId = null;
-        let cart = []; // Ahora cada item guardará el ID del hijo
+        let cart = []; 
+        let pendingMenuQuantities = {}; // Guarda cantidades antes de agregar al carrito
+        let showChildModal = false; // Controla la visibilidad del modal de selección de alumno
         let restrictions = {
             1: { noTacc: false }, 
             2: { noTacc: false }, 
@@ -100,13 +102,14 @@
                 { id: 101, name: "Sándwich de Jamón y Queso", price: 1200, hasTacc: true, img: "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=300&q=80" },
                 { id: 102, name: "Cookies de Chocolate", price: 850, hasTacc: true, img: "https://images.unsplash.com/photo-1499636136210-65425fb6a5c7?auto=format&fit=crop&w=300&q=80" },
                 { id: 103, name: "Manzana Roja", price: 300, hasTacc: false, img: "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=300&q=80" },
-                { id: 104, name: "Jugo de Naranja Natural", price: 600, hasTacc: false, img: "https://images.unsplash.com/photo-1613478223719-2ab802602423?auto=format&fit=crop&w=300&q=80" }
+                { id: 104, name: "Jugo de Naranja", price: 600, hasTacc: false, img: "https://images.unsplash.com/photo-1613478223719-2ab802602423?auto=format&fit=crop&w=300&q=80" },
+                { id: 107, name: "Empanada de Carne", price: 900, hasTacc: true, img: "https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=300&q=80" }
             ],
             "Colegio Santa María": [
                 { id: 201, name: "Hamburguesa Completa", price: 2500, hasTacc: true, img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=300&q=80" },
                 { id: 202, name: "Ensalada César", price: 1800, hasTacc: false, img: "https://images.unsplash.com/photo-1550304943-4f24f54ddde9?auto=format&fit=crop&w=300&q=80" },
                 { id: 203, name: "Agua Saborizada", price: 500, hasTacc: false, img: "https://images.unsplash.com/photo-1525059696034-4967a8e1dca2?auto=format&fit=crop&w=300&q=80" },
-                { id: 204, name: "Barrita de Cereal Mix", price: 500, hasTacc: true, img: "https://images.unsplash.com/photo-1622467820202-0ca336495914?auto=format&fit=crop&w=300&q=80" },
+                { id: 204, name: "Barrita de Cereal", price: 500, hasTacc: true, img: "https://images.unsplash.com/photo-1622467820202-0ca336495914?auto=format&fit=crop&w=300&q=80" },
                 { id: 205, name: "Yogurt con Frutas", price: 950, hasTacc: false, img: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=300&q=80" }
             ]
         };
@@ -114,27 +117,60 @@
         // --- LÓGICA DE NAVEGACIÓN ---
         function navigateTo(view, params = null) {
             currentView = view;
-            if (params && params.childId) currentChildId = params.childId;
+            if (params && params.childId) {
+                currentChildId = params.childId;
+                pendingMenuQuantities = {}; // Reiniciar cantidades temporales al cambiar de hijo
+            }
             render();
             window.scrollTo(0,0);
         }
 
-        // --- FUNCIONES DE CARRITO (Adaptadas para múltiples hijos y colegios) ---
+        // --- FUNCIONES DE MODAL DE ALUMNO ---
+        function openChildModal() { showChildModal = true; render(); }
+        function closeChildModal() { showChildModal = false; render(); }
+        function switchChild(newId) {
+            currentChildId = newId;
+            showChildModal = false;
+            pendingMenuQuantities = {};
+            render();
+        }
+
+        // --- FUNCIONES DE CARRITO Y CANTIDAD ---
+        function changeMenuQuantity(productId, delta) {
+            // Buscamos si el producto YA está en el carrito para este hijo
+            const cartItem = cart.find(i => i.id === productId && i.childId === currentChildId);
+            
+            if (cartItem) {
+                // Si ya está en el carrito, el selector modifica directamente el carrito
+                updateQuantity(productId, currentChildId, delta);
+            } else {
+                // Si no está en el carrito, modificamos el estado temporal
+                if (!pendingMenuQuantities[productId]) pendingMenuQuantities[productId] = 1;
+                pendingMenuQuantities[productId] += delta;
+                
+                // La cantidad mínima es 1
+                if (pendingMenuQuantities[productId] < 1) pendingMenuQuantities[productId] = 1;
+                render();
+            }
+        }
+
         function addToCart(productId) {
-            // Buscamos el producto en todos los catálogos combinados
             const allProducts = Object.values(productsBySchool).flat();
             const product = allProducts.find(p => p.id === productId);
-            
-            // Buscamos si ESTE producto ya está en el carrito para ESTE hijo
             const inCart = cart.find(item => item.id === productId && item.childId === currentChildId);
             
+            // Cantidad elegida temporalmente (por defecto 1)
+            const qtyToAdd = pendingMenuQuantities[productId] || 1;
+            
             if (inCart) {
-                inCart.quantity++;
+                inCart.quantity = qtyToAdd; // Resguardo de seguridad
             } else {
-                cart.push({ ...product, quantity: 1, childId: currentChildId });
+                cart.push({ ...product, quantity: qtyToAdd, childId: currentChildId });
             }
+            
             updateCartUI();
-            showNotification(`Se agregó "${product.name}" al carrito`);
+            showNotification(`Se agregaron ${qtyToAdd}x "${product.name}" al carrito`);
+            render();
         }
 
         function updateQuantity(productId, childId, delta) {
@@ -177,7 +213,6 @@
         }
 
         function generateWithdrawalCode() {
-            // Se utiliza una sola palabra de un diccionario amplio como fue solicitado.
             const animals = [
                 "Lobo", "Tigre", "Puma", "Oso", "Gato", "Perro", "Zorro", "Rana", 
                 "Sapo", "Búho", "Pato", "Cisne", "Loro", "Pez", "Foca", "Cebra", 
@@ -189,6 +224,34 @@
         // --- RENDERIZADO DE VISTAS ---
         function render() {
             const app = document.getElementById('app');
+            
+            // HTML base para inyectar si hay modal
+            let modalHTML = '';
+
+            if (showChildModal) {
+                modalHTML = `
+                    <div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                        <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl relative">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-xl font-bold text-turquesa">Seleccionar Alumno</h3>
+                                <button onclick="closeChildModal()" class="text-gray-400 hover:text-gray-600 bg-gray-100 w-8 h-8 rounded-full flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div class="space-y-3">
+                                ${children.map(c => `
+                                    <button onclick="switchChild(${c.id})" class="w-full flex items-center gap-4 p-3 rounded-2xl border ${c.id === currentChildId ? 'border-turquesa bg-turquesa/5' : 'border-gray-100 hover:bg-gray-50'} transition-all text-left group">
+                                        <img src="${c.img}" class="w-12 h-12 rounded-full object-cover border-2 ${c.id === currentChildId ? 'border-turquesa' : 'border-transparent'}">
+                                        <div class="flex-grow">
+                                            <h4 class="font-bold text-sm ${c.id === currentChildId ? 'text-turquesa' : 'text-gray-800'}">${c.name}</h4>
+                                            <p class="text-xs text-gray-500">${c.school}</p>
+                                        </div>
+                                        ${c.id === currentChildId ? '<i class="fa-solid fa-circle-check text-turquesa text-lg"></i>' : '<i class="fa-solid fa-chevron-right text-gray-300 group-hover:text-naranja"></i>'}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
             
             switch (currentView) {
                 case 'home':
@@ -245,7 +308,7 @@
                     const childData = children.find(c => c.id === currentChildId);
                     app.innerHTML = `
                         <div class="max-w-2xl mx-auto">
-                            <button onclick="navigateTo('home')" class="mb-4 text-turquesa font-bold flex items-center"><i class="fa-solid fa-arrow-left mr-2"></i> Volver al Inicio</button>
+                            <button onclick="navigateTo('home')" class="mb-4 text-turquesa font-bold flex items-center hover:underline"><i class="fa-solid fa-arrow-left mr-2"></i> Volver al Inicio</button>
                             <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
                                 <div class="flex items-center gap-4 mb-6">
                                     <img src="${childData.img}" class="w-16 h-16 rounded-full object-cover border-2 border-lila" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(childData.name)}&background=A78BFA&color=fff'">
@@ -285,35 +348,66 @@
                 case 'canteen':
                     const activeChild = children.find(c => c.id === currentChildId);
                     const activeNoTacc = restrictions[currentChildId].noTacc;
-                    
-                    // Obtener los productos específicos de la escuela del alumno
                     const schoolProducts = productsBySchool[activeChild.school] || [];
 
                     app.innerHTML = `
+                        ${modalHTML}
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
                             <div>
-                                <button onclick="navigateTo('home')" class="text-turquesa text-sm font-bold mb-2 block hover:underline"><i class="fa-solid fa-arrow-left mr-1"></i> Cambiar de alumno</button>
                                 <h2 class="text-3xl font-bold text-turquesa">Menú de Cantina</h2>
-                                <p class="text-gray-500">Comprando para: <span class="font-bold text-turquesa">${activeChild.name}</span> en <span class="font-bold">${activeChild.school}</span></p>
+                                <p class="text-gray-500 flex items-center flex-wrap gap-2 mt-1">
+                                    Comprando para: 
+                                    <span class="font-bold text-turquesa bg-turquesa/10 px-3 py-1 rounded-full flex items-center gap-2">
+                                        <img src="${activeChild.img}" class="w-5 h-5 rounded-full object-cover">
+                                        ${activeChild.name}
+                                        <button onclick="openChildModal()" class="text-lila hover:text-purple-700 ml-1 bg-white rounded-full w-5 h-5 flex justify-center items-center shadow-sm" title="Cambiar de alumno">
+                                            <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                        </button>
+                                    </span>
+                                    en <span class="font-bold text-gray-700">${activeChild.school}</span>
+                                </p>
                             </div>
                             ${activeNoTacc ? '<span class="bg-red-100 text-red-600 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 border border-red-200"><i class="fa-solid fa-shield-wheat"></i> PERFIL SIN TACC ACTIVO</span>' : ''}
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                        
+                        <!-- Grid de 5 columnas en escritorio, 3 en tablets, 1 o 2 en móviles -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-6">
                             ${schoolProducts.length === 0 ? `<p class="col-span-full text-gray-500 italic">No hay productos disponibles para esta escuela.</p>` : ''}
                             ${schoolProducts.map(p => {
                                 const isDisabled = activeNoTacc && p.hasTacc;
+                                
+                                // Determinar la cantidad actual a mostrar (desde el carrito si está agregado, sino desde el estado temporal)
+                                const inCartItem = cart.find(i => i.id === p.id && i.childId === currentChildId);
+                                const isAdded = !!inCartItem;
+                                const currentQty = isAdded ? inCartItem.quantity : (pendingMenuQuantities[p.id] || 1);
+
                                 return `
-                                    <div class="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm transition-all hover:shadow-md ${isDisabled ? 'item-disabled' : ''}">
-                                        <div class="relative h-48">
+                                    <div class="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm transition-all hover:shadow-md ${isDisabled ? 'item-disabled' : 'hover:-translate-y-1'} flex flex-col h-full">
+                                        <div class="relative h-32 shrink-0">
                                             <img src="${p.img}" class="w-full h-full object-cover" alt="${p.name}">
-                                            ${p.hasTacc ? '<span class="absolute top-3 right-3 bg-white/90 px-2 py-1 rounded-lg text-[10px] font-bold text-gray-700 shadow-sm">CON TACC</span>' : '<span class="absolute top-3 right-3 bg-green-500 text-white px-2 py-1 rounded-lg text-[10px] font-bold shadow-sm">SIN TACC</span>'}
+                                            ${p.hasTacc ? '<span class="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded-md text-[9px] font-bold text-gray-700 shadow-sm">CON TACC</span>' : '<span class="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-md text-[9px] font-bold shadow-sm">SIN TACC</span>'}
                                         </div>
-                                        <div class="p-6">
-                                            <h3 class="text-lg font-bold text-gray-800 mb-1 h-14 line-clamp-2">${p.name}</h3>
-                                            <p class="text-turquesa font-bold text-xl mb-4">$${p.price.toLocaleString('es-AR')}</p>
+                                        <div class="p-4 flex flex-col flex-grow">
+                                            <h3 class="text-base font-bold text-gray-800 mb-1 leading-tight flex-grow line-clamp-2">${p.name}</h3>
+                                            <p class="text-turquesa font-bold text-lg mb-3">$${p.price.toLocaleString('es-AR')}</p>
+                                            
                                             ${isDisabled ? 
-                                                '<button class="w-full bg-gray-200 text-gray-500 font-bold py-3 rounded-2xl cursor-not-allowed flex items-center justify-center gap-2"><i class="fa-solid fa-ban"></i> No permitido</button>' : 
-                                                `<button onclick="addToCart(${p.id})" class="w-full bg-turquesa text-white font-bold py-3 rounded-2xl hover:bg-teal-900 transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-cart-plus"></i> Agregar al carrito</button>`
+                                                '<button class="w-full bg-gray-200 text-gray-500 font-bold py-2 rounded-xl cursor-not-allowed flex items-center justify-center gap-2 text-sm mt-auto"><i class="fa-solid fa-ban"></i> Bloqueado</button>' : 
+                                                `
+                                                <div class="mt-auto">
+                                                    <!-- Selector de cantidad integrado en la cantina -->
+                                                    <div class="flex items-center justify-between gap-2 mb-3 bg-gray-50 p-1.5 rounded-xl border border-gray-100">
+                                                        <button onclick="changeMenuQuantity(${p.id}, -1)" class="w-8 h-8 bg-white rounded-lg shadow-sm text-turquesa flex items-center justify-center hover:bg-gray-100 transition-colors"><i class="fa-solid fa-minus text-xs"></i></button>
+                                                        <span class="font-bold w-6 text-center text-sm text-gray-800">${currentQty}</span>
+                                                        <button onclick="changeMenuQuantity(${p.id}, 1)" class="w-8 h-8 bg-white rounded-lg shadow-sm text-turquesa flex items-center justify-center hover:bg-gray-100 transition-colors"><i class="fa-solid fa-plus text-xs"></i></button>
+                                                    </div>
+                                                    
+                                                    ${isAdded ? 
+                                                        `<button disabled class="w-full bg-green-500 text-white font-bold py-2 rounded-xl flex items-center justify-center gap-2 text-sm opacity-90 transition-all"><i class="fa-solid fa-check"></i> En el carrito</button>` :
+                                                        `<button onclick="addToCart(${p.id})" class="w-full bg-turquesa text-white font-bold py-2 rounded-xl hover:bg-teal-900 transition-all flex items-center justify-center gap-2 text-sm shadow-sm"><i class="fa-solid fa-cart-plus"></i> Agregar</button>`
+                                                    }
+                                                </div>
+                                                `
                                             }
                                         </div>
                                     </div>
@@ -326,7 +420,6 @@
                 case 'cart':
                     const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
                     
-                    // Agrupar items del carrito por ID del hijo
                     const groupedCart = cart.reduce((acc, item) => {
                         if (!acc[item.childId]) acc[item.childId] = [];
                         acc[item.childId].push(item);
@@ -487,10 +580,7 @@
                     break;
 
                 case 'success':
-                    // Extraer los IDs únicos de los hijos que tenían productos en el carrito
                     const kidsInOrder = [...new Set(cart.map(item => item.childId))];
-                    
-                    // Generar un código para cada hijo y armar el HTML
                     const codesHTML = kidsInOrder.map(cId => {
                         const child = children.find(c => c.id == cId);
                         const code = generateWithdrawalCode().toUpperCase();
@@ -508,7 +598,7 @@
                         `;
                     }).join('');
 
-                    cart = []; // Vaciar el carrito tras capturar los datos
+                    cart = []; 
                     updateCartUI();
 
                     app.innerHTML = `
