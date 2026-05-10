@@ -106,10 +106,11 @@
         // Estado del Modal de Detalles
         let selectedPurchaseId = null;
 
+        // Estructura de restricciones ampliada
         let restrictions = {
-            1: { noTacc: false }, 
-            2: { noTacc: false }, 
-            3: { noTacc: false }  
+            1: { noTacc: false, noSugar: false, noPeanuts: false, vegan: false }, 
+            2: { noTacc: false, noSugar: false, noPeanuts: false, vegan: false }, 
+            3: { noTacc: false, noSugar: false, noPeanuts: false, vegan: false }  
         };
         
         // --- LISTA DE FERIADOS (Formato YYYY-MM-DD) ---
@@ -124,20 +125,21 @@
             { id: 3, name: "Mateo García", year: "6to Año C", school: "Colegio Santa María", balance: 800, img: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=300&h=300&auto=format&fit=crop" }
         ];
 
+        // Productos con nuevos flags nutricionales
         const productsBySchool = {
             "Instituto San José": [
-                { id: 101, name: "Sándwich de Jamón y Queso", price: 1200, hasTacc: true, img: "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=300&q=80" },
-                { id: 102, name: "Cookies de Chocolate", price: 850, hasTacc: true, img: "https://images.unsplash.com/photo-1499636136210-65425fb6a5c7?auto=format&fit=crop&w=300&q=80" },
-                { id: 103, name: "Manzana Roja", price: 300, hasTacc: false, img: "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=300&q=80" },
-                { id: 104, name: "Jugo de Naranja", price: 600, hasTacc: false, img: "https://images.unsplash.com/photo-1613478223719-2ab802602423?auto=format&fit=crop&w=300&q=80" },
-                { id: 107, name: "Empanada de Carne", price: 900, hasTacc: true, img: "https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=300&q=80" }
+                { id: 101, name: "Sándwich de Jamón y Queso", price: 1200, hasTacc: true, hasSugar: false, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=300&q=80" },
+                { id: 102, name: "Cookies de Chocolate y Maní", price: 850, hasTacc: true, hasSugar: true, hasPeanuts: true, isVegan: false, img: "https://images.unsplash.com/photo-1499636136210-65425fb6a5c7?auto=format&fit=crop&w=300&q=80" },
+                { id: 103, name: "Manzana Roja", price: 300, hasTacc: false, hasSugar: false, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=300&q=80" },
+                { id: 104, name: "Jugo de Naranja", price: 600, hasTacc: false, hasSugar: true, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1613478223719-2ab802602423?auto=format&fit=crop&w=300&q=80" },
+                { id: 107, name: "Empanada de Carne", price: 900, hasTacc: true, hasSugar: false, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=300&q=80" }
             ],
             "Colegio Santa María": [
-                { id: 201, name: "Hamburguesa Completa", price: 2500, hasTacc: true, img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=300&q=80" },
-                { id: 202, name: "Ensalada César", price: 1800, hasTacc: false, img: "https://images.unsplash.com/photo-1550304943-4f24f54ddde9?auto=format&fit=crop&w=300&q=80" },
-                { id: 203, name: "Agua Saborizada", price: 500, hasTacc: false, img: "https://images.unsplash.com/photo-1525059696034-4967a8e1dca2?auto=format&fit=crop&w=300&q=80" },
-                { id: 204, name: "Barrita de Cereal", price: 500, hasTacc: true, img: "https://images.unsplash.com/photo-1622467820202-0ca336495914?auto=format&fit=crop&w=300&q=80" },
-                { id: 205, name: "Yogurt con Frutas", price: 950, hasTacc: false, img: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=300&q=80" }
+                { id: 201, name: "Hamburguesa Completa", price: 2500, hasTacc: true, hasSugar: false, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=300&q=80" },
+                { id: 202, name: "Ensalada Fresca", price: 1800, hasTacc: false, hasSugar: false, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1550304943-4f24f54ddde9?auto=format&fit=crop&w=300&q=80" },
+                { id: 203, name: "Agua Mineral", price: 500, hasTacc: false, hasSugar: false, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1525059696034-4967a8e1dca2?auto=format&fit=crop&w=300&q=80" },
+                { id: 204, name: "Barrita de Cereal Mix", price: 500, hasTacc: true, hasSugar: true, hasPeanuts: true, isVegan: true, img: "https://images.unsplash.com/photo-1622467820202-0ca336495914?auto=format&fit=crop&w=300&q=80" },
+                { id: 205, name: "Yogurt con Frutas", price: 950, hasTacc: false, hasSugar: true, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=300&q=80" }
             ]
         };
 
@@ -156,12 +158,12 @@
             {
                 id: 10002,
                 childId: 2,
-                date: '2026-05-15', // Fecha futura de ejemplo
+                date: '2026-05-15', 
                 breakTime: '2do Recreo',
                 total: 850,
                 status: 'Pendiente',
                 code: 'LOBO',
-                items: [{ name: "Cookies de Chocolate", quantity: 1, price: 850, img: productsBySchool["Instituto San José"][1].img }]
+                items: [{ name: "Cookies de Chocolate y Maní", quantity: 1, price: 850, img: productsBySchool["Instituto San José"][1].img }]
             }
         ];
 
@@ -228,7 +230,6 @@
                 currentChildId = params.childId;
                 pendingMenuQuantities = {}; 
             }
-            // Si vamos global, reseteamos el hijo para mostrar todos (ej. navbar)
             if (view === 'movements' && (!params || !params.childId)) {
                 currentChildId = null;
             }
@@ -393,7 +394,7 @@
                     code: code,
                     items: [...groupedCart[childId]]
                 };
-                purchases.unshift(newPurchase); // Agregar al inicio (más reciente primero)
+                purchases.unshift(newPurchase);
 
                 lastCheckoutCodes.push({ childName: child.name, img: child.img, code: code });
             });
@@ -555,12 +556,9 @@
                     `;
                     break;
 
-                // Vistas de Movimientos y Pendientes
                 case 'movements':
                 case 'pending':
                     const isPendingView = currentView === 'pending';
-                    
-                    // Si hay childId, filtramos por alumno, si no, mostramos todos
                     let viewChild = null;
                     let filteredPurchases = purchases;
 
@@ -644,6 +642,8 @@
 
                 case 'restrictions':
                     const childData = children.find(c => c.id === currentChildId);
+                    const childRestr = restrictions[currentChildId];
+                    
                     app.innerHTML = `
                         <div class="max-w-2xl mx-auto">
                             <button onclick="navigateTo('home')" class="mb-4 text-turquesa font-bold flex items-center hover:underline"><i class="fa-solid fa-arrow-left mr-2"></i> Volver al Inicio</button>
@@ -655,27 +655,68 @@
                                         <p class="text-sm text-gray-500">${childData.year} - ${childData.school}</p>
                                     </div>
                                 </div>
-                                <div class="space-y-6">
-                                    <div class="flex items-center justify-between p-5 bg-gray-50 rounded-2xl border border-transparent hover:border-red-100 transition-all">
+                                <div class="space-y-4">
+                                    
+                                    <!-- SIN TACC -->
+                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-red-100 transition-all">
                                         <div class="flex items-center gap-4">
-                                            <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xl"><i class="fa-solid fa-wheat-awn-circle-exclamation"></i></div>
+                                            <div class="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-lg"><i class="fa-solid fa-wheat-awn-circle-exclamation"></i></div>
                                             <div>
-                                                <p class="font-bold">Sin TACC (Celíaco)</p>
-                                                <p class="text-xs text-gray-500">Bloquea automáticamente productos con gluten.</p>
+                                                <p class="font-bold text-gray-800">Sin TACC (Celíaco)</p>
+                                                <p class="text-xs text-gray-500">Bloquea productos con gluten.</p>
                                             </div>
                                         </div>
                                         <label class="relative inline-flex items-center cursor-pointer">
-                                            <input type="checkbox" onchange="restrictions[${childData.id}].noTacc = this.checked" class="sr-only peer" ${restrictions[childData.id].noTacc ? 'checked' : ''}>
-                                            <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-turquesa"></div>
+                                            <input type="checkbox" onchange="restrictions[${childData.id}].noTacc = this.checked" class="sr-only peer" ${childRestr.noTacc ? 'checked' : ''}>
+                                            <div class="w-12 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-turquesa"></div>
                                         </label>
                                     </div>
-                                    <div class="flex items-center justify-between p-5 bg-gray-50 rounded-2xl opacity-50 grayscale">
+
+                                    <!-- SIN AZÚCAR -->
+                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-blue-100 transition-all">
                                         <div class="flex items-center gap-4">
-                                            <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-xl"><i class="fa-solid fa-seedling"></i></div>
-                                            <p class="font-bold">Vegano / Vegetariano</p>
+                                            <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-lg"><i class="fa-solid fa-cubes-stacked"></i></div>
+                                            <div>
+                                                <p class="font-bold text-gray-800">Sin Azúcar Agregada</p>
+                                                <p class="text-xs text-gray-500">Perfil apto para diabéticos.</p>
+                                            </div>
                                         </div>
-                                        <i class="fa-solid fa-toggle-off text-3xl text-gray-300"></i>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" onchange="restrictions[${childData.id}].noSugar = this.checked" class="sr-only peer" ${childRestr.noSugar ? 'checked' : ''}>
+                                            <div class="w-12 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-turquesa"></div>
+                                        </label>
                                     </div>
+
+                                    <!-- ALERGIA MANÍ -->
+                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-orange-100 transition-all">
+                                        <div class="flex items-center gap-4">
+                                            <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-lg"><i class="fa-solid fa-seedling"></i></div>
+                                            <div>
+                                                <p class="font-bold text-gray-800">Alergia al Maní / Frutos Secos</p>
+                                                <p class="text-xs text-gray-500">Bloquea snacks y productos con trazas.</p>
+                                            </div>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" onchange="restrictions[${childData.id}].noPeanuts = this.checked" class="sr-only peer" ${childRestr.noPeanuts ? 'checked' : ''}>
+                                            <div class="w-12 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-turquesa"></div>
+                                        </label>
+                                    </div>
+
+                                    <!-- VEGANO -->
+                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-green-100 transition-all">
+                                        <div class="flex items-center gap-4">
+                                            <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-lg"><i class="fa-solid fa-leaf"></i></div>
+                                            <div>
+                                                <p class="font-bold text-gray-800">Menú Vegano</p>
+                                                <p class="text-xs text-gray-500">Libre de productos de origen animal.</p>
+                                            </div>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" onchange="restrictions[${childData.id}].vegan = this.checked" class="sr-only peer" ${childRestr.vegan ? 'checked' : ''}>
+                                            <div class="w-12 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-turquesa"></div>
+                                        </label>
+                                    </div>
+
                                 </div>
                                 <button onclick="navigateTo('home')" class="w-full mt-8 bg-turquesa text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-teal-900 transition-all">Guardar Cambios</button>
                             </div>
@@ -684,9 +725,16 @@
                     break;
 
                 case 'canteen':
-                    const activeChild = children.find(c => c.id === currentChildId);
-                    const activeNoTacc = restrictions[currentChildId].noTacc;
-                    const schoolProducts = productsBySchool[activeChild.school] || [];
+                    const activeChildCant = children.find(c => c.id === currentChildId);
+                    const activeRestr = restrictions[currentChildId];
+                    const schoolProducts = productsBySchool[activeChildCant.school] || [];
+                    
+                    // Identificamos cuántas/cuáles restricciones están activas para mostrar en el título
+                    let activeBadges = [];
+                    if(activeRestr.noTacc) activeBadges.push('SIN TACC');
+                    if(activeRestr.noSugar) activeBadges.push('SIN AZÚCAR');
+                    if(activeRestr.noPeanuts) activeBadges.push('SIN MANÍ');
+                    if(activeRestr.vegan) activeBadges.push('VEGANO');
 
                     app.innerHTML = `
                         ${modalHTML}
@@ -696,22 +744,37 @@
                                 <p class="text-gray-500 flex items-center flex-wrap gap-2 mt-1">
                                     Comprando para: 
                                     <span class="font-bold text-turquesa bg-turquesa/10 px-3 py-1 rounded-full flex items-center gap-2">
-                                        <img src="${activeChild.img}" class="w-5 h-5 rounded-full object-cover">
-                                        ${activeChild.name}
+                                        <img src="${activeChildCant.img}" class="w-5 h-5 rounded-full object-cover">
+                                        ${activeChildCant.name}
                                         <button onclick="openChildModal()" class="text-lila hover:text-purple-700 ml-1 bg-white rounded-full w-5 h-5 flex justify-center items-center shadow-sm" title="Cambiar de alumno">
                                             <i class="fa-solid fa-pen-to-square text-xs"></i>
                                         </button>
                                     </span>
-                                    en <span class="font-bold text-gray-700">${activeChild.school}</span>
+                                    en <span class="font-bold text-gray-700">${activeChildCant.school}</span>
                                 </p>
                             </div>
-                            ${activeNoTacc ? '<span class="bg-red-100 text-red-600 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 border border-red-200"><i class="fa-solid fa-shield-wheat"></i> PERFIL SIN TACC ACTIVO</span>' : ''}
+                            
+                            ${activeBadges.length > 0 ? `
+                                <div class="flex flex-wrap gap-2 justify-end">
+                                    <span class="bg-red-50 text-red-600 px-3 py-2 rounded-xl text-xs font-bold border border-red-100 flex items-center gap-2">
+                                        <i class="fa-solid fa-shield-halved"></i> RESTRICCIONES ACTIVAS: ${activeBadges.join(', ')}
+                                    </span>
+                                </div>
+                            ` : ''}
                         </div>
                         
                         <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-6">
                             ${schoolProducts.length === 0 ? `<p class="col-span-full text-gray-500 italic">No hay productos disponibles para esta escuela.</p>` : ''}
                             ${schoolProducts.map(p => {
-                                const isDisabled = activeNoTacc && p.hasTacc;
+                                // Lógica de bloqueo inteligente
+                                let blockReason = "";
+                                if (activeRestr.noTacc && p.hasTacc) blockReason = "Contiene TACC";
+                                else if (activeRestr.noSugar && p.hasSugar) blockReason = "Contiene Azúcar";
+                                else if (activeRestr.noPeanuts && p.hasPeanuts) blockReason = "Contiene Maní";
+                                else if (activeRestr.vegan && !p.isVegan) blockReason = "No es Vegano";
+
+                                const isDisabled = blockReason !== "";
+
                                 const inCartItem = cart.find(i => i.id === p.id && i.childId === currentChildId);
                                 const isAdded = !!inCartItem;
                                 const currentQty = isAdded ? inCartItem.quantity : (pendingMenuQuantities[p.id] || 1);
@@ -720,14 +783,15 @@
                                     <div class="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm transition-all hover:shadow-md ${isDisabled ? 'item-disabled' : 'hover:-translate-y-1'} flex flex-col h-full">
                                         <div class="relative h-32 shrink-0">
                                             <img src="${p.img}" class="w-full h-full object-cover" alt="${p.name}">
-                                            ${p.hasTacc ? '<span class="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded-md text-[9px] font-bold text-gray-700 shadow-sm">CON TACC</span>' : '<span class="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-md text-[9px] font-bold shadow-sm">SIN TACC</span>'}
                                         </div>
                                         <div class="p-4 flex flex-col flex-grow">
                                             <h3 class="text-base font-bold text-gray-800 mb-1 leading-tight flex-grow line-clamp-2">${p.name}</h3>
                                             <p class="text-turquesa font-bold text-lg mb-3">$${p.price.toLocaleString('es-AR')}</p>
                                             
                                             ${isDisabled ? 
-                                                '<button class="w-full bg-gray-200 text-gray-500 font-bold py-2 rounded-xl cursor-not-allowed flex items-center justify-center gap-2 text-sm mt-auto"><i class="fa-solid fa-ban"></i> Bloqueado</button>' : 
+                                                `<button class="w-full bg-gray-200 text-gray-600 font-bold py-2 rounded-xl cursor-not-allowed flex items-center justify-center gap-2 text-xs mt-auto">
+                                                    <i class="fa-solid fa-ban"></i> ${blockReason}
+                                                </button>` : 
                                                 `
                                                 <div class="mt-auto">
                                                     <div class="flex items-center justify-between gap-2 mb-3 bg-gray-50 p-1.5 rounded-xl border border-gray-100">
