@@ -65,6 +65,63 @@
         .slide-anim {
             animation: fadeInSlide 0.6s ease-out forwards;
         }
+
+        /* DUAL RANGE SLIDER CUSTOM CSS */
+        .slider-container {
+            position: relative;
+            width: 100%;
+            height: 30px;
+        }
+        .slider-track-bg {
+            position: absolute;
+            width: 100%;
+            height: 6px;
+            background-color: #e5e7eb;
+            border-radius: 3px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .slider-track-fill {
+            position: absolute;
+            height: 6px;
+            background-color: var(--naranja);
+            border-radius: 3px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+        .slider-input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: none;
+            pointer-events: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            z-index: 2;
+        }
+        .slider-input::-webkit-slider-thumb {
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid var(--turquesa);
+            pointer-events: auto;
+            -webkit-appearance: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            cursor: pointer;
+        }
+        .slider-input::-moz-range-thumb {
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid var(--turquesa);
+            pointer-events: auto;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="min-h-screen relative">
@@ -72,7 +129,7 @@
     <!-- Notificación Flotante -->
     <div id="notification-container" class="fixed top-0 left-1/2 -translate-x-1/2 z-50 pointer-events-none"></div>
 
-    <!-- Barra de Navegación (Se agregó ID para ocultarla en la intro) -->
+    <!-- Barra de Navegación -->
     <nav id="main-nav" class="bg-turquesa text-white sticky top-0 z-40 shadow-md h-16 flex items-center px-4 md:px-8 justify-between transition-opacity duration-300">
         <div onclick="navigateTo('home')" class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
             <img src="./logo.png" alt="Logo Recred" class="h-10 w-auto object-contain" onerror="this.src='https://ui-avatars.com/api/?name=RC&background=FFC107&color=0D6B78&rounded=true'">
@@ -98,30 +155,37 @@
 
     <script>
         // --- ESTADO DE LA APLICACIÓN ---
-        // Cambiamos la vista inicial a 'intro1'
         let currentView = 'intro1';
         let currentChildId = null;
         let cart = []; 
         let pendingMenuQuantities = {}; 
         let showChildModal = false; 
         
-        // Estado del checkout temporal
         let checkoutDate = '';
         let checkoutBreak = '';
         let lastCheckoutCodes = [];
-        let lastNegativeChildId = null; // Cambiado para saber exactamente qué hijo quedó en negativo
+        let lastNegativeChildId = null; 
 
-        // Estado del Modal de Detalles
         let selectedPurchaseId = null;
+        
+        // Variables para el rango de precios dinámico
+        let currentMinPrice = 0;
+        let currentMaxPrice = 1000;
 
-        // Estructura de restricciones ampliada
+        let canteenFilters = {
+            search: '',
+            category: 'all',
+            minSelected: 0,
+            maxSelected: 1000,
+            trait: 'all'
+        };
+
         let restrictions = {
             1: { noTacc: false, noSugar: false, noPeanuts: false, vegan: false }, 
             2: { noTacc: false, noSugar: false, noPeanuts: false, vegan: false }, 
             3: { noTacc: false, noSugar: false, noPeanuts: false, vegan: false }  
         };
         
-        // --- LISTA DE FERIADOS (Formato YYYY-MM-DD) ---
         const feriados = [
             '2026-05-01', '2026-05-25', '2026-06-20', '2026-07-09', 
             '2026-09-21', '2026-10-12', '2026-11-20'
@@ -133,25 +197,23 @@
             { id: 3, name: "Mateo García", year: "6to Año C", school: "Colegio Santa María", balance: 800, img: "./mateo.jpg" }
         ];
 
-        // Productos con nuevos flags nutricionales
         const productsBySchool = {
             "Instituto San José": [
-                { id: 101, name: "Sándwich de Jamón y Queso", price: 1200, hasTacc: true, hasSugar: false, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=300&q=80" },
-                { id: 102, name: "Cookies de Chocolate y Maní", price: 850, hasTacc: true, hasSugar: true, hasPeanuts: true, isVegan: false, img: "https://images.unsplash.com/photo-1499636136210-65425fb6a5c7?auto=format&fit=crop&w=300&q=80" },
-                { id: 103, name: "Manzana Roja", price: 300, hasTacc: false, hasSugar: false, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=300&q=80" },
-                { id: 104, name: "Jugo de Naranja", price: 600, hasTacc: false, hasSugar: true, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1613478223719-2ab802602423?auto=format&fit=crop&w=300&q=80" },
-                { id: 107, name: "Empanada de Carne", price: 900, hasTacc: true, hasSugar: false, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=300&q=80" }
+                { id: 101, name: "Sándwich de Jamón y Queso", category: "Comidas", price: 1200, hasTacc: true, hasSugar: false, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=300&q=80" },
+                { id: 102, name: "Cookies de Chocolate y Maní", category: "Snacks", price: 850, hasTacc: true, hasSugar: true, hasPeanuts: true, isVegan: false, img: "https://images.unsplash.com/photo-1499636136210-65425fb6a5c7?auto=format&fit=crop&w=300&q=80" },
+                { id: 103, name: "Manzana Roja", category: "Snacks", price: 300, hasTacc: false, hasSugar: false, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=300&q=80" },
+                { id: 104, name: "Jugo de Naranja", category: "Bebidas", price: 600, hasTacc: false, hasSugar: true, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1613478223719-2ab802602423?auto=format&fit=crop&w=300&q=80" },
+                { id: 107, name: "Empanada de Carne", category: "Comidas", price: 900, hasTacc: true, hasSugar: false, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=300&q=80" }
             ],
             "Colegio Santa María": [
-                { id: 201, name: "Hamburguesa Completa", price: 2500, hasTacc: true, hasSugar: false, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=300&q=80" },
-                { id: 202, name: "Ensalada Fresca", price: 1800, hasTacc: false, hasSugar: false, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1550304943-4f24f54ddde9?auto=format&fit=crop&w=300&q=80" },
-                { id: 203, name: "Agua Mineral", price: 500, hasTacc: false, hasSugar: false, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1525059696034-4967a8e1dca2?auto=format&fit=crop&w=300&q=80" },
-                { id: 204, name: "Barrita de Cereal Mix", price: 500, hasTacc: true, hasSugar: true, hasPeanuts: true, isVegan: true, img: "https://images.unsplash.com/photo-1622467820202-0ca336495914?auto=format&fit=crop&w=300&q=80" },
-                { id: 205, name: "Yogurt con Frutas", price: 950, hasTacc: false, hasSugar: true, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=300&q=80" }
+                { id: 201, name: "Hamburguesa Completa", category: "Comidas", price: 2500, hasTacc: true, hasSugar: false, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=300&q=80" },
+                { id: 202, name: "Ensalada Fresca", category: "Comidas", price: 1800, hasTacc: false, hasSugar: false, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1550304943-4f24f54ddde9?auto=format&fit=crop&w=300&q=80" },
+                { id: 203, name: "Agua Mineral", category: "Bebidas", price: 500, hasTacc: false, hasSugar: false, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1525059696034-4967a8e1dca2?auto=format&fit=crop&w=300&q=80" },
+                { id: 204, name: "Barrita de Cereal Mix", category: "Snacks", price: 500, hasTacc: true, hasSugar: true, hasPeanuts: true, isVegan: true, img: "https://images.unsplash.com/photo-1622467820202-0ca336495914?auto=format&fit=crop&w=300&q=80" },
+                { id: 205, name: "Yogurt con Frutas", category: "Snacks", price: 950, hasTacc: false, hasSugar: true, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=300&q=80" }
             ]
         };
 
-        // --- BASE DE DATOS DE COMPRAS (Mock) ---
         let purchases = [
             {
                 id: 10001,
@@ -241,24 +303,223 @@
             if (view === 'movements' && (!params || !params.childId)) {
                 currentChildId = null;
             }
+            // Al entrar a la cantina, calculamos los precios dinámicamente y reseteamos filtros
+            if (view === 'canteen') {
+                const activeChild = children.find(c => c.id === currentChildId);
+                const schoolProducts = productsBySchool[activeChild.school] || [];
+                
+                if (schoolProducts.length > 0) {
+                    const prices = schoolProducts.map(p => p.price);
+                    currentMinPrice = Math.min(...prices);
+                    currentMaxPrice = Math.max(...prices);
+                } else {
+                    currentMinPrice = 0;
+                    currentMaxPrice = 1000;
+                }
+                
+                resetFiltersLogic();
+            }
             render();
             window.scrollTo(0,0);
         }
 
-        // --- FUNCIONES DE MODAL ---
+        // --- FUNCIONES DE FILTRO Y DUAL SLIDER ---
+        function resetFiltersLogic() {
+            canteenFilters = { 
+                search: '', 
+                category: 'all', 
+                minSelected: currentMinPrice, 
+                maxSelected: currentMaxPrice, 
+                trait: 'all' 
+            };
+        }
+
+        function resetFilters() {
+            resetFiltersLogic();
+            // Actualizar inputs del DOM
+            const searchInput = document.getElementById('filter-search');
+            const catSelect = document.getElementById('filter-category');
+            const traitSelect = document.getElementById('filter-trait');
+            if(searchInput) searchInput.value = '';
+            if(catSelect) catSelect.value = 'all';
+            if(traitSelect) traitSelect.value = 'all';
+            
+            // Actualizar DOM de Sliders
+            const sMin = document.getElementById('slider-min');
+            const sMax = document.getElementById('slider-max');
+            if(sMin && sMax) {
+                sMin.value = currentMinPrice;
+                sMax.value = currentMaxPrice;
+                updateSliderVisuals();
+            }
+            
+            renderCanteenGrid();
+        }
+
+        function handleFilterChange() {
+            canteenFilters.search = document.getElementById('filter-search').value.toLowerCase();
+            canteenFilters.category = document.getElementById('filter-category').value;
+            canteenFilters.trait = document.getElementById('filter-trait').value;
+            renderCanteenGrid();
+        }
+
+        function onSliderInput(type) {
+            let sMin = document.getElementById('slider-min');
+            let sMax = document.getElementById('slider-max');
+            let valMin = parseInt(sMin.value);
+            let valMax = parseInt(sMax.value);
+            
+            // Evitar que se crucen
+            if (valMin >= valMax) {
+                if (type === 'min') sMin.value = valMax - 100;
+                if (type === 'max') sMax.value = valMin + 100;
+            }
+            
+            updateSliderVisuals();
+            
+            canteenFilters.minSelected = parseInt(sMin.value);
+            canteenFilters.maxSelected = parseInt(sMax.value);
+            renderCanteenGrid();
+        }
+
+        function updateSliderVisuals() {
+            let sMin = document.getElementById('slider-min');
+            let sMax = document.getElementById('slider-max');
+            let trackFill = document.getElementById('slider-track-fill');
+            let displayMin = document.getElementById('display-min');
+            let displayMax = document.getElementById('display-max');
+            
+            if(!sMin || !sMax) return;
+
+            let valMin = parseInt(sMin.value);
+            let valMax = parseInt(sMax.value);
+            
+            displayMin.innerText = valMin;
+            displayMax.innerText = valMax;
+
+            let percentMin = ((valMin - sMin.min) / (sMin.max - sMin.min)) * 100;
+            let percentMax = ((valMax - sMax.min) / (sMax.max - sMax.min)) * 100;
+            
+            if(trackFill) {
+                trackFill.style.left = percentMin + "%";
+                trackFill.style.width = (percentMax - percentMin) + "%";
+            }
+        }
+
+        function renderCanteenGrid() {
+            const gridContainer = document.getElementById('canteen-grid');
+            if (!gridContainer) return;
+
+            const activeChildCant = children.find(c => c.id === currentChildId);
+            const activeRestr = restrictions[currentChildId];
+            let schoolProducts = productsBySchool[activeChildCant.school] || [];
+
+            // 1. Filtrar por Nombre
+            if (canteenFilters.search !== '') {
+                schoolProducts = schoolProducts.filter(p => p.name.toLowerCase().includes(canteenFilters.search));
+            }
+            
+            // 2. Filtrar por Categoría
+            if (canteenFilters.category !== 'all') {
+                schoolProducts = schoolProducts.filter(p => p.category === canteenFilters.category);
+            }
+
+            // 3. Filtrar por Rango de Precios Dinámico
+            schoolProducts = schoolProducts.filter(p => p.price >= canteenFilters.minSelected && p.price <= canteenFilters.maxSelected);
+
+            // 4. Filtrar por Componentes/Atributos
+            if (canteenFilters.trait !== 'all') {
+                schoolProducts = schoolProducts.filter(p => {
+                    if (canteenFilters.trait === 'notacc') return !p.hasTacc;
+                    if (canteenFilters.trait === 'nosugar') return !p.hasSugar;
+                    if (canteenFilters.trait === 'nopeanuts') return !p.hasPeanuts;
+                    if (canteenFilters.trait === 'vegan') return p.isVegan;
+                    return true;
+                });
+            }
+
+            if (schoolProducts.length === 0) {
+                gridContainer.innerHTML = `
+                    <div class="col-span-full py-12 text-center bg-white rounded-3xl border border-dashed border-gray-200 shadow-sm">
+                        <i class="fa-solid fa-face-frown-open text-5xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500 text-lg">No se encontraron productos que coincidan con los filtros aplicados.</p>
+                        <button onclick="resetFilters()" class="mt-4 bg-gray-100 text-gray-600 px-6 py-2 rounded-xl font-bold hover:bg-turquesa hover:text-white transition-colors"><i class="fa-solid fa-rotate-right mr-2"></i>Limpiar Filtros</button>
+                    </div>
+                `;
+                return;
+            }
+
+            // Renderizar las tarjetas
+            gridContainer.innerHTML = schoolProducts.map(p => {
+                let blockReason = "";
+                if (activeRestr.noTacc && p.hasTacc) blockReason = "Contiene TACC";
+                else if (activeRestr.noSugar && p.hasSugar) blockReason = "Contiene Azúcar";
+                else if (activeRestr.noPeanuts && p.hasPeanuts) blockReason = "Contiene Maní";
+                else if (activeRestr.vegan && !p.isVegan) blockReason = "No es Vegano";
+
+                const isDisabled = blockReason !== "";
+
+                const inCartItem = cart.find(i => i.id === p.id && i.childId === currentChildId);
+                const isAdded = !!inCartItem;
+                const currentQty = isAdded ? inCartItem.quantity : (pendingMenuQuantities[p.id] || 1);
+
+                return `
+                    <div class="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm transition-all hover:shadow-md ${isDisabled ? 'item-disabled' : 'hover:-translate-y-1'} flex flex-col h-full">
+                        <div class="relative h-32 shrink-0">
+                            <img src="${p.img}" class="w-full h-full object-cover" alt="${p.name}">
+                        </div>
+                        <div class="p-4 flex flex-col flex-grow">
+                            <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">${p.category}</p>
+                            <h3 class="text-base font-bold text-gray-800 mb-1 leading-tight flex-grow line-clamp-2">${p.name}</h3>
+                            <p class="text-turquesa font-bold text-lg mb-3">$${p.price.toLocaleString('es-AR')}</p>
+                            
+                            ${isDisabled ? 
+                                `<button class="w-full bg-gray-200 text-gray-600 font-bold py-2 rounded-xl cursor-not-allowed flex items-center justify-center gap-2 text-xs mt-auto">
+                                    <i class="fa-solid fa-ban"></i> ${blockReason}
+                                </button>` : 
+                                `
+                                <div class="mt-auto">
+                                    <div class="flex items-center justify-between gap-2 mb-3 bg-gray-50 p-1.5 rounded-xl border border-gray-100">
+                                        <button onclick="changeMenuQuantity(${p.id}, -1)" class="w-8 h-8 bg-white rounded-lg shadow-sm text-turquesa flex items-center justify-center hover:bg-gray-100 transition-colors"><i class="fa-solid fa-minus text-xs"></i></button>
+                                        <span class="font-bold w-6 text-center text-sm text-gray-800">${currentQty}</span>
+                                        <button onclick="changeMenuQuantity(${p.id}, 1)" class="w-8 h-8 bg-white rounded-lg shadow-sm text-turquesa flex items-center justify-center hover:bg-gray-100 transition-colors"><i class="fa-solid fa-plus text-xs"></i></button>
+                                    </div>
+                                    
+                                    ${isAdded ? 
+                                        `<button disabled class="w-full bg-green-500 text-white font-bold py-2 rounded-xl flex items-center justify-center gap-2 text-sm opacity-90 transition-all"><i class="fa-solid fa-check"></i> En el carrito</button>` :
+                                        `<button onclick="addToCart(${p.id})" class="w-full bg-turquesa text-white font-bold py-2 rounded-xl hover:bg-teal-900 transition-all flex items-center justify-center gap-2 text-sm shadow-sm"><i class="fa-solid fa-cart-plus"></i> Agregar</button>`
+                                    }
+                                </div>
+                                `
+                            }
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- OTRAS FUNCIONES ---
         function openChildModal() { showChildModal = true; render(); }
         function closeChildModal() { showChildModal = false; render(); }
         function switchChild(newId) {
             currentChildId = newId;
             showChildModal = false;
             pendingMenuQuantities = {};
+            // Al cambiar de hijo, actualizamos precios dinámicos según su colegio y reseteamos
+            const activeChild = children.find(c => c.id === currentChildId);
+            const schoolProducts = productsBySchool[activeChild.school] || [];
+            if (schoolProducts.length > 0) {
+                const prices = schoolProducts.map(p => p.price);
+                currentMinPrice = Math.min(...prices);
+                currentMaxPrice = Math.max(...prices);
+            }
+            resetFiltersLogic();
             render();
         }
 
         function openPurchaseDetails(id) { selectedPurchaseId = id; render(); }
         function closePurchaseDetails() { selectedPurchaseId = null; render(); }
 
-        // --- FUNCIONES DE CARRITO Y CHECKOUT ---
         function changeMenuQuantity(productId, delta) {
             const cartItem = cart.find(i => i.id === productId && i.childId === currentChildId);
             if (cartItem) {
@@ -361,7 +622,6 @@
             return warnings;
         }
 
-        // --- FLUJO DE COMPRA ---
         function goToConfirm() {
             checkoutDate = document.getElementById('order-date')?.value || getNextValidDateStr();
             checkoutBreak = document.getElementById('order-break')?.value || '1er Recreo';
@@ -385,16 +645,13 @@
                 const childTotal = spentPerChild[childId];
                 const code = generateWithdrawalCode().toUpperCase();
                 
-                // Actualizar saldo
                 if (child) {
                     child.balance -= childTotal;
-                    // Guardar el ID del primer hijo que quede en negativo
                     if (child.balance < 0 && !lastNegativeChildId) {
                         lastNegativeChildId = child.id;
                     }
                 }
 
-                // Guardar Ticket de Compra
                 const newPurchase = {
                     id: Date.now() + Math.floor(Math.random() * 1000),
                     childId: parseInt(childId),
@@ -414,12 +671,11 @@
             navigateTo('success');
         }
 
-        // --- RENDERIZADO DE VISTAS ---
+        // --- RENDERIZADO PRINCIPAL ---
         function render() {
             const app = document.getElementById('app');
             const mainNav = document.getElementById('main-nav');
             
-            // Ocultar Navbar durante la presentación inicial
             if (['intro1', 'intro2', 'intro3'].includes(currentView)) {
                 mainNav.style.display = 'none';
             } else {
@@ -429,7 +685,6 @@
             let modalHTML = '';
             let modalDetailsHTML = '';
 
-            // Modal Selector Alumno
             if (showChildModal) {
                 modalHTML = `
                     <div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
@@ -455,7 +710,6 @@
                 `;
             }
 
-            // Modal Detalles Compra
             if (selectedPurchaseId) {
                 const p = purchases.find(pur => pur.id === selectedPurchaseId);
                 const child = children.find(c => c.id === p.childId);
@@ -526,14 +780,12 @@
             }
             
             switch (currentView) {
-                // --- VISTAS DE PRESENTACIÓN (DIAPOSITIVAS) ---
                 case 'intro1':
                     app.innerHTML = `
                         <div class="fixed inset-0 bg-turquesa flex flex-col items-center justify-center text-center slide-anim z-50 p-4">
                             <div class="bg-white p-12 md:p-16 rounded-[3rem] shadow-2xl flex flex-col items-center max-w-lg w-full relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-turquesa via-lila to-naranja"></div>
                                 
-                                <!-- Logo Local: Asegúrate de tener 'logo.png' en tu carpeta -->
                                 <img src="./logo.png" alt="Logo Recred" class="w-48 h-48 object-contain mb-6 drop-shadow-sm" onerror="this.src='https://ui-avatars.com/api/?name=Re+Cred&background=FFC107&color=0D6B78&size=200&font-size=0.4'">
                                 
                                 <h1 class="text-6xl md:text-7xl font-urbanist font-bold text-turquesa tracking-tight mb-3">RECRED</h1>
@@ -601,8 +853,6 @@
                         </div>
                     `;
                     break;
-
-                // --- FIN DE VISTAS DE PRESENTACIÓN ---
 
                 case 'home':
                     const groupedChildren = children.reduce((acc, child) => {
@@ -755,7 +1005,6 @@
                                 </div>
                                 <div class="space-y-4">
                                     
-                                    <!-- SIN TACC -->
                                     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-red-100 transition-all">
                                         <div class="flex items-center gap-4">
                                             <div class="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-lg"><i class="fa-solid fa-wheat-awn-circle-exclamation"></i></div>
@@ -770,7 +1019,6 @@
                                         </label>
                                     </div>
 
-                                    <!-- SIN AZÚCAR -->
                                     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-blue-100 transition-all">
                                         <div class="flex items-center gap-4">
                                             <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-lg"><i class="fa-solid fa-cubes-stacked"></i></div>
@@ -785,7 +1033,6 @@
                                         </label>
                                     </div>
 
-                                    <!-- ALERGIA MANÍ -->
                                     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-orange-100 transition-all">
                                         <div class="flex items-center gap-4">
                                             <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-lg"><i class="fa-solid fa-seedling"></i></div>
@@ -800,7 +1047,6 @@
                                         </label>
                                     </div>
 
-                                    <!-- VEGANO -->
                                     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-green-100 transition-all">
                                         <div class="flex items-center gap-4">
                                             <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-lg"><i class="fa-solid fa-leaf"></i></div>
@@ -828,7 +1074,6 @@
                     app.innerHTML = `
                         <div class="max-w-2xl mx-auto py-12">
                             <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 text-center relative overflow-hidden">
-                                <!-- Detalle visual superior -->
                                 <div class="absolute top-0 left-0 w-full h-2 bg-[#009EE3]"></div> 
                                 
                                 <div class="w-20 h-20 bg-blue-50 text-[#009EE3] rounded-full flex items-center justify-center text-4xl mx-auto mb-6 shadow-sm">
@@ -859,9 +1104,7 @@
                 case 'canteen':
                     const activeChildCant = children.find(c => c.id === currentChildId);
                     const activeRestr = restrictions[currentChildId];
-                    const schoolProducts = productsBySchool[activeChildCant.school] || [];
                     
-                    // Identificamos cuántas/cuáles restricciones están activas para mostrar en el título
                     let activeBadges = [];
                     if(activeRestr.noTacc) activeBadges.push('SIN TACC');
                     if(activeRestr.noSugar) activeBadges.push('SIN AZÚCAR');
@@ -870,12 +1113,12 @@
 
                     app.innerHTML = `
                         ${modalHTML}
-                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+                        <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
                             <div>
                                 <h2 class="text-3xl font-bold text-turquesa">Menú de Cantina</h2>
                                 <p class="text-gray-500 flex items-center flex-wrap gap-2 mt-1">
                                     Comprando para: 
-                                    <span class="font-bold text-turquesa bg-turquesa/10 px-3 py-1 rounded-full flex items-center gap-2">
+                                    <span class="font-bold text-turquesa bg-turquesa/10 px-3 py-1 rounded-full flex items-center gap-2 shadow-sm border border-turquesa/20">
                                         <img src="${activeChildCant.img}" class="w-5 h-5 rounded-full object-cover">
                                         ${activeChildCant.name}
                                         <button onclick="openChildModal()" class="text-lila hover:text-purple-700 ml-1 bg-white rounded-full w-5 h-5 flex justify-center items-center shadow-sm" title="Cambiar de alumno">
@@ -883,6 +1126,10 @@
                                         </button>
                                     </span>
                                     en <span class="font-bold text-gray-700">${activeChildCant.school}</span>
+                                    <span class="hidden md:inline text-gray-300">|</span>
+                                    <span class="bg-gray-100 px-3 py-1 rounded-full text-sm">
+                                        Saldo: <strong class="${activeChildCant.balance < 0 ? 'text-red-500' : 'text-turquesa'}">${formatCurrency(activeChildCant.balance)}</strong>
+                                    </span>
                                 </p>
                             </div>
                             
@@ -894,57 +1141,56 @@
                                 </div>
                             ` : ''}
                         </div>
+
+                        <!-- BARRA DE FILTROS -->
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-8 flex flex-col lg:flex-row gap-6 items-center">
+                            <!-- Buscador en tiempo real -->
+                            <div class="relative w-full lg:w-1/3 shrink-0">
+                                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                <input type="text" id="filter-search" value="${canteenFilters.search}" oninput="handleFilterChange()" placeholder="Buscar por nombre..." class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-turquesa transition-colors text-sm font-medium">
+                            </div>
+                            
+                            <!-- DUAL SLIDER DE PRECIOS -->
+                            <div class="w-full lg:w-1/3 px-4 flex flex-col justify-center">
+                                <div class="flex justify-between text-xs font-bold text-gray-400 uppercase mb-2">
+                                    <span>Precio Mínimo: <span id="display-min" class="text-turquesa"></span></span>
+                                    <span>Precio Máximo: <span id="display-max" class="text-turquesa"></span></span>
+                                </div>
+                                <div class="slider-container">
+                                    <div class="slider-track-bg"></div>
+                                    <div id="slider-track-fill" class="slider-track-fill"></div>
+                                    <input type="range" id="slider-min" min="${currentMinPrice}" max="${currentMaxPrice}" value="${canteenFilters.minSelected}" step="50" oninput="onSliderInput('min')" class="slider-input">
+                                    <input type="range" id="slider-max" min="${currentMinPrice}" max="${currentMaxPrice}" value="${canteenFilters.maxSelected}" step="50" oninput="onSliderInput('max')" class="slider-input">
+                                </div>
+                            </div>
+
+                            <!-- Filtros combinados adicionales -->
+                            <div class="flex gap-2 w-full lg:w-1/3 overflow-x-auto pb-2 lg:pb-0 hide-scrollbar justify-end">
+                                <select id="filter-category" onchange="handleFilterChange()" class="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-turquesa text-sm font-medium text-gray-700 shrink-0">
+                                    <option value="all" ${canteenFilters.category === 'all' ? 'selected' : ''}>Categorías</option>
+                                    <option value="Comidas" ${canteenFilters.category === 'Comidas' ? 'selected' : ''}>Comidas</option>
+                                    <option value="Bebidas" ${canteenFilters.category === 'Bebidas' ? 'selected' : ''}>Bebidas</option>
+                                    <option value="Snacks" ${canteenFilters.category === 'Snacks' ? 'selected' : ''}>Snacks</option>
+                                </select>
+
+                                <select id="filter-trait" onchange="handleFilterChange()" class="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-turquesa text-sm font-medium text-gray-700 shrink-0">
+                                    <option value="all" ${canteenFilters.trait === 'all' ? 'selected' : ''}>Componentes</option>
+                                    <option value="notacc" ${canteenFilters.trait === 'notacc' ? 'selected' : ''}>Apto Celíacos</option>
+                                    <option value="vegan" ${canteenFilters.trait === 'vegan' ? 'selected' : ''}>Solo Veganos</option>
+                                    <option value="nosugar" ${canteenFilters.trait === 'nosugar' ? 'selected' : ''}>Sin Azúcar</option>
+                                    <option value="nopeanuts" ${canteenFilters.trait === 'nopeanuts' ? 'selected' : ''}>Sin Maní</option>
+                                </select>
+                            </div>
+                        </div>
                         
-                        <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-6">
-                            ${schoolProducts.length === 0 ? `<p class="col-span-full text-gray-500 italic">No hay productos disponibles para esta escuela.</p>` : ''}
-                            ${schoolProducts.map(p => {
-                                // Lógica de bloqueo inteligente
-                                let blockReason = "";
-                                if (activeRestr.noTacc && p.hasTacc) blockReason = "Contiene TACC";
-                                else if (activeRestr.noSugar && p.hasSugar) blockReason = "Contiene Azúcar";
-                                else if (activeRestr.noPeanuts && p.hasPeanuts) blockReason = "Contiene Maní";
-                                else if (activeRestr.vegan && !p.isVegan) blockReason = "No es Vegano";
-
-                                const isDisabled = blockReason !== "";
-
-                                const inCartItem = cart.find(i => i.id === p.id && i.childId === currentChildId);
-                                const isAdded = !!inCartItem;
-                                const currentQty = isAdded ? inCartItem.quantity : (pendingMenuQuantities[p.id] || 1);
-
-                                return `
-                                    <div class="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm transition-all hover:shadow-md ${isDisabled ? 'item-disabled' : 'hover:-translate-y-1'} flex flex-col h-full">
-                                        <div class="relative h-32 shrink-0">
-                                            <img src="${p.img}" class="w-full h-full object-cover" alt="${p.name}">
-                                        </div>
-                                        <div class="p-4 flex flex-col flex-grow">
-                                            <h3 class="text-base font-bold text-gray-800 mb-1 leading-tight flex-grow line-clamp-2">${p.name}</h3>
-                                            <p class="text-turquesa font-bold text-lg mb-3">$${p.price.toLocaleString('es-AR')}</p>
-                                            
-                                            ${isDisabled ? 
-                                                `<button class="w-full bg-gray-200 text-gray-600 font-bold py-2 rounded-xl cursor-not-allowed flex items-center justify-center gap-2 text-xs mt-auto">
-                                                    <i class="fa-solid fa-ban"></i> ${blockReason}
-                                                </button>` : 
-                                                `
-                                                <div class="mt-auto">
-                                                    <div class="flex items-center justify-between gap-2 mb-3 bg-gray-50 p-1.5 rounded-xl border border-gray-100">
-                                                        <button onclick="changeMenuQuantity(${p.id}, -1)" class="w-8 h-8 bg-white rounded-lg shadow-sm text-turquesa flex items-center justify-center hover:bg-gray-100 transition-colors"><i class="fa-solid fa-minus text-xs"></i></button>
-                                                        <span class="font-bold w-6 text-center text-sm text-gray-800">${currentQty}</span>
-                                                        <button onclick="changeMenuQuantity(${p.id}, 1)" class="w-8 h-8 bg-white rounded-lg shadow-sm text-turquesa flex items-center justify-center hover:bg-gray-100 transition-colors"><i class="fa-solid fa-plus text-xs"></i></button>
-                                                    </div>
-                                                    
-                                                    ${isAdded ? 
-                                                        `<button disabled class="w-full bg-green-500 text-white font-bold py-2 rounded-xl flex items-center justify-center gap-2 text-sm opacity-90 transition-all"><i class="fa-solid fa-check"></i> En el carrito</button>` :
-                                                        `<button onclick="addToCart(${p.id})" class="w-full bg-turquesa text-white font-bold py-2 rounded-xl hover:bg-teal-900 transition-all flex items-center justify-center gap-2 text-sm shadow-sm"><i class="fa-solid fa-cart-plus"></i> Agregar</button>`
-                                                    }
-                                                </div>
-                                                `
-                                            }
-                                        </div>
-                                    </div>
-                                `;
-                            }).join('')}
+                        <!-- CONTENEDOR DEL GRID -->
+                        <div id="canteen-grid" class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-6">
+                            <!-- Se renderiza via JS -->
                         </div>
                     `;
+
+                    updateSliderVisuals(); // Inicializa los colores del slider
+                    renderCanteenGrid();
                     break;
 
                 case 'cart':
