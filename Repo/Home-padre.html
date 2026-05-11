@@ -65,6 +65,63 @@
         .slide-anim {
             animation: fadeInSlide 0.6s ease-out forwards;
         }
+
+        /* DUAL RANGE SLIDER CUSTOM CSS */
+        .slider-container {
+            position: relative;
+            width: 100%;
+            height: 30px;
+        }
+        .slider-track-bg {
+            position: absolute;
+            width: 100%;
+            height: 6px;
+            background-color: #e5e7eb;
+            border-radius: 3px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .slider-track-fill {
+            position: absolute;
+            height: 6px;
+            background-color: var(--naranja);
+            border-radius: 3px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+        .slider-input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: none;
+            pointer-events: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            z-index: 2;
+        }
+        .slider-input::-webkit-slider-thumb {
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid var(--turquesa);
+            pointer-events: auto;
+            -webkit-appearance: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            cursor: pointer;
+        }
+        .slider-input::-moz-range-thumb {
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid var(--turquesa);
+            pointer-events: auto;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="min-h-screen relative">
@@ -72,11 +129,17 @@
     <!-- Notificación Flotante -->
     <div id="notification-container" class="fixed top-0 left-1/2 -translate-x-1/2 z-50 pointer-events-none"></div>
 
-    <!-- Barra de Navegación (Se agregó ID para ocultarla en la intro) -->
+    <!-- Barra de Navegación -->
     <nav id="main-nav" class="bg-turquesa text-white sticky top-0 z-40 shadow-md h-16 flex items-center px-4 md:px-8 justify-between transition-opacity duration-300">
-        <div onclick="navigateTo('home')" class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
-            <img src="./logo.png" alt="Logo Recred" class="h-10 w-auto object-contain" onerror="this.src='https://ui-avatars.com/api/?name=RC&background=FFC107&color=0D6B78&rounded=true'">
-            <span class="font-urbanist font-bold text-2xl tracking-tight text-amarillo">RECRED</span>
+        <div class="flex items-center gap-4">
+            <div onclick="navigateTo('home')" class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
+                <img src="./logo.png" alt="Logo Recred" class="h-10 w-auto object-contain" onerror="this.src='https://ui-avatars.com/api/?name=RC&background=FFC107&color=0D6B78&rounded=true'">
+                <span class="font-urbanist font-bold text-2xl tracking-tight text-amarillo hidden sm:inline">RECRED</span>
+            </div>
+            <!-- Saludo de usuario logueado -->
+            <div class="hidden md:flex items-center border-l border-white/20 pl-4 ml-2">
+                <span id="user-greeting" class="text-sm font-medium opacity-90">Hola, Martín</span>
+            </div>
         </div>
         
         <div class="hidden md:flex gap-6 items-center font-medium">
@@ -98,30 +161,44 @@
 
     <script>
         // --- ESTADO DE LA APLICACIÓN ---
-        // Cambiamos la vista inicial a 'intro1'
+        const loggedUserName = "Martín"; 
         let currentView = 'intro1';
         let currentChildId = null;
         let cart = []; 
         let pendingMenuQuantities = {}; 
         let showChildModal = false; 
         
-        // Estado del checkout temporal
-        let checkoutDate = '';
-        let checkoutBreak = '';
+        // Estado del checkout individualizado por alumno
+        let cartCheckoutData = {}; 
         let lastCheckoutCodes = [];
-        let lastNegativeChildId = null; // Cambiado para saber exactamente qué hijo quedó en negativo
+        let lastNegativeChildId = null; 
 
-        // Estado del Modal de Detalles
         let selectedPurchaseId = null;
+        
+        // Variables para el rango de precios dinámico
+        let currentMinPrice = 0;
+        let currentMaxPrice = 1000;
 
-        // Estructura de restricciones ampliada
+        let canteenFilters = {
+            search: '',
+            category: 'all',
+            minSelected: 0,
+            maxSelected: 1000,
+            trait: 'all'
+        };
+
         let restrictions = {
-            1: { noTacc: false, noSugar: false, noPeanuts: false, vegan: false }, 
-            2: { noTacc: false, noSugar: false, noPeanuts: false, vegan: false }, 
-            3: { noTacc: false, noSugar: false, noPeanuts: false, vegan: false }  
+            1: { noTacc: false, noSugar: false, noPeanuts: false, vegan: false, allowedBreaks: { '1er': true, '2do': true, 'mediodia': true, 'fuera': true } }, 
+            2: { noTacc: false, noSugar: false, noPeanuts: false, vegan: false, allowedBreaks: { '1er': true, '2do': true, 'mediodia': true, 'fuera': true } }, 
+            3: { noTacc: false, noSugar: false, noPeanuts: false, vegan: false, allowedBreaks: { '1er': true, '2do': true, 'mediodia': true, 'fuera': true } }  
+        };
+
+        let specificItemRestrictions = {
+            1: [], 
+            2: [], 
+            3: []  
         };
         
-        // --- LISTA DE FERIADOS (Formato YYYY-MM-DD) ---
         const feriados = [
             '2026-05-01', '2026-05-25', '2026-06-20', '2026-07-09', 
             '2026-09-21', '2026-10-12', '2026-11-20'
@@ -133,25 +210,23 @@
             { id: 3, name: "Mateo García", year: "6to Año C", school: "Colegio Santa María", balance: 800, img: "./mateo.jpg" }
         ];
 
-        // Productos con nuevos flags nutricionales
         const productsBySchool = {
             "Instituto San José": [
-                { id: 101, name: "Sándwich de Jamón y Queso", price: 1200, hasTacc: true, hasSugar: false, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=300&q=80" },
-                { id: 102, name: "Cookies de Chocolate y Maní", price: 850, hasTacc: true, hasSugar: true, hasPeanuts: true, isVegan: false, img: "https://images.unsplash.com/photo-1499636136210-65425fb6a5c7?auto=format&fit=crop&w=300&q=80" },
-                { id: 103, name: "Manzana Roja", price: 300, hasTacc: false, hasSugar: false, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=300&q=80" },
-                { id: 104, name: "Jugo de Naranja", price: 600, hasTacc: false, hasSugar: true, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1613478223719-2ab802602423?auto=format&fit=crop&w=300&q=80" },
-                { id: 107, name: "Empanada de Carne", price: 900, hasTacc: true, hasSugar: false, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=300&q=80" }
+                { id: 101, name: "Sándwich de Jamón y Queso", category: "Comidas", price: 1200, hasTacc: true, hasSugar: false, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=300&q=80" },
+                { id: 102, name: "Cookies de Chocolate y Maní", category: "Snacks", price: 850, hasTacc: true, hasSugar: true, hasPeanuts: true, isVegan: false, img: "https://images.unsplash.com/photo-1499636136210-65425fb6a5c7?auto=format&fit=crop&w=300&q=80" },
+                { id: 103, name: "Manzana Roja", category: "Snacks", price: 300, hasTacc: false, hasSugar: false, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=300&q=80" },
+                { id: 104, name: "Jugo de Naranja", category: "Bebidas", price: 600, hasTacc: false, hasSugar: true, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1613478223719-2ab802602423?auto=format&fit=crop&w=300&q=80" },
+                { id: 107, name: "Empanada de Carne", category: "Comidas", price: 900, hasTacc: true, hasSugar: false, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=300&q=80" }
             ],
             "Colegio Santa María": [
-                { id: 201, name: "Hamburguesa Completa", price: 2500, hasTacc: true, hasSugar: false, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=300&q=80" },
-                { id: 202, name: "Ensalada Fresca", price: 1800, hasTacc: false, hasSugar: false, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1550304943-4f24f54ddde9?auto=format&fit=crop&w=300&q=80" },
-                { id: 203, name: "Agua Mineral", price: 500, hasTacc: false, hasSugar: false, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1525059696034-4967a8e1dca2?auto=format&fit=crop&w=300&q=80" },
-                { id: 204, name: "Barrita de Cereal Mix", price: 500, hasTacc: true, hasSugar: true, hasPeanuts: true, isVegan: true, img: "https://images.unsplash.com/photo-1622467820202-0ca336495914?auto=format&fit=crop&w=300&q=80" },
-                { id: 205, name: "Yogurt con Frutas", price: 950, hasTacc: false, hasSugar: true, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=300&q=80" }
+                { id: 201, name: "Hamburguesa Completa", category: "Comidas", price: 2500, hasTacc: true, hasSugar: false, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=300&q=80" },
+                { id: 202, name: "Ensalada Fresca", category: "Comidas", price: 1800, hasTacc: false, hasSugar: false, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1550304943-4f24f54ddde9?auto=format&fit=crop&w=300&q=80" },
+                { id: 203, name: "Agua Mineral", category: "Bebidas", price: 500, hasTacc: false, hasSugar: false, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1525059696034-4967a8e1dca2?auto=format&fit=crop&w=300&q=80" },
+                { id: 204, name: "Barrita de Cereal Mix", category: "Snacks", price: 500, hasTacc: true, hasSugar: true, hasPeanuts: true, isVegan: true, img: "https://images.unsplash.com/photo-1622467820202-0ca336495914?auto=format&fit=crop&w=300&q=80" },
+                { id: 205, name: "Yogurt con Frutas", category: "Snacks", price: 950, hasTacc: false, hasSugar: true, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=300&q=80" }
             ]
         };
 
-        // --- BASE DE DATOS DE COMPRAS (Mock) ---
         let purchases = [
             {
                 id: 10001,
@@ -174,6 +249,9 @@
                 items: [{ name: "Cookies de Chocolate y Maní", quantity: 1, price: 850, img: productsBySchool["Instituto San José"][1].img }]
             }
         ];
+
+        // --- INICIALIZACIONES ---
+        document.getElementById('user-greeting').innerText = `Hola, ${loggedUserName}`;
 
         // --- FUNCIONES DE FECHA ---
         function getTodayString() {
@@ -215,20 +293,69 @@
             }
         }
 
-        function handleDateChange(input) {
+        function handleIndividualDateChange(input, childId) {
             const selectedDate = input.value;
             const todayStr = getTodayString();
             
             if (selectedDate < todayStr) {
                 showNotification("No puedes seleccionar fechas pasadas. Se ajustó a hoy.", true);
-                input.value = getNextValidDateStr();
+                updateCartChildData(childId, 'date', getNextValidDateStr());
                 return;
             }
 
             if (isFeriadoOFinDeSemana(selectedDate)) {
                 showNotification("Fecha no disponible (Fin de semana o Feriado). Se ajustó al próximo día hábil.", true);
-                input.value = getNextValidDateStr(selectedDate);
+                updateCartChildData(childId, 'date', getNextValidDateStr(selectedDate));
+                return;
             }
+            
+            updateCartChildData(childId, 'date', selectedDate);
+        }
+
+        // --- UTILIDADES GLOBALES ---
+        function formatCurrency(amount) {
+            const isNegative = amount < 0;
+            const absAmount = Math.abs(amount);
+            return (isNegative ? '-$' : '$') + absAmount.toLocaleString('es-AR');
+        }
+
+        function getBalanceWarnings() {
+            const warnings = [];
+            const spentPerChild = {};
+            cart.forEach(item => {
+                // Solo calcular para alumnos seleccionados en el carrito
+                if (cartCheckoutData[item.childId] && cartCheckoutData[item.childId].selected) {
+                    spentPerChild[item.childId] = (spentPerChild[item.childId] || 0) + (item.price * item.quantity);
+                }
+            });
+            for (const childId in spentPerChild) {
+                const child = children.find(c => c.id == childId);
+                const newBalance = child.balance - spentPerChild[childId];
+                if (newBalance < 0) {
+                    warnings.push({ name: child.name, newBalance: newBalance });
+                }
+            }
+            return warnings;
+        }
+
+        function generateWithdrawalCode() {
+            const animals = [
+                "Lobo", "Tigre", "Puma", "Oso", "Gato", "Perro", "Zorro", "Rana", 
+                "Sapo", "Búho", "Pato", "Cisne", "Loro", "Pez", "Foca", "Cebra", 
+                "Morsa", "Koala", "Panda", "Gallo", "Pollo", "Ganso", "Toro", "Vaca"
+            ];
+            return animals[Math.floor(Math.random() * animals.length)];
+        }
+
+        function showNotification(message, isWarning = false) {
+            const container = document.getElementById('notification-container');
+            const notif = document.createElement('div');
+            const bgColor = isWarning ? 'bg-naranja' : 'bg-green-500';
+            const icon = isWarning ? 'fa-triangle-exclamation' : 'fa-circle-check';
+            notif.className = `notification mt-4 ${bgColor} text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3 font-semibold z-50`;
+            notif.innerHTML = `<i class="fa-solid ${icon}"></i> ${message}`;
+            container.appendChild(notif);
+            setTimeout(() => notif.remove(), 4000); 
         }
 
         // --- LÓGICA DE NAVEGACIÓN ---
@@ -241,24 +368,287 @@
             if (view === 'movements' && (!params || !params.childId)) {
                 currentChildId = null;
             }
+            if (view === 'canteen') {
+                const activeChild = children.find(c => c.id === currentChildId);
+                const schoolProducts = productsBySchool[activeChild.school] || [];
+                
+                if (schoolProducts.length > 0) {
+                    const prices = schoolProducts.map(p => p.price);
+                    currentMinPrice = Math.min(...prices);
+                    currentMaxPrice = Math.max(...prices);
+                } else {
+                    currentMinPrice = 0;
+                    currentMaxPrice = 1000;
+                }
+                resetFiltersLogic();
+            }
+            
+            // Inicializar datos del carrito si entramos a él
+            if (view === 'cart') {
+                initializeCartData();
+            }
+
             render();
             window.scrollTo(0,0);
         }
 
-        // --- FUNCIONES DE MODAL ---
+        // --- LÓGICA DEL CHECKOUT Y CARRITO ---
+        function initializeCartData() {
+            const kidsInCart = [...new Set(cart.map(i => i.childId))];
+            
+            // Crear entrada para hijos nuevos en el carrito
+            kidsInCart.forEach(id => {
+                if (!cartCheckoutData[id]) {
+                    cartCheckoutData[id] = { 
+                        selected: true, 
+                        date: getNextValidDateStr(), 
+                        breakTime: '1er Recreo' 
+                    };
+                }
+            });
+
+            // Limpiar hijos que ya no tienen productos
+            Object.keys(cartCheckoutData).forEach(id => {
+                if (!kidsInCart.includes(parseInt(id))) {
+                    delete cartCheckoutData[id];
+                }
+            });
+        }
+
+        function toggleCartChild(childId) {
+            if(cartCheckoutData[childId]) {
+                cartCheckoutData[childId].selected = !cartCheckoutData[childId].selected;
+                render();
+            }
+        }
+
+        function updateCartChildData(childId, field, value) {
+            if(cartCheckoutData[childId]) {
+                cartCheckoutData[childId][field] = value;
+                if(field === 'date') {
+                    // Forzar re-render para mostrar la nueva fecha si hubo autocorrección
+                    render();
+                }
+            }
+        }
+
+        // --- FUNCIONES DE FILTRO Y DUAL SLIDER ---
+        function resetFiltersLogic() {
+            canteenFilters = { 
+                search: '', 
+                category: 'all', 
+                minSelected: currentMinPrice, 
+                maxSelected: currentMaxPrice, 
+                trait: 'all' 
+            };
+        }
+
+        function resetFilters() {
+            resetFiltersLogic();
+            const searchInput = document.getElementById('filter-search');
+            const catSelect = document.getElementById('filter-category');
+            const traitSelect = document.getElementById('filter-trait');
+            if(searchInput) searchInput.value = '';
+            if(catSelect) catSelect.value = 'all';
+            if(traitSelect) traitSelect.value = 'all';
+            
+            const sMin = document.getElementById('slider-min');
+            const sMax = document.getElementById('slider-max');
+            if(sMin && sMax) {
+                sMin.value = currentMinPrice;
+                sMax.value = currentMaxPrice;
+                updateSliderVisuals();
+            }
+            renderCanteenGrid();
+        }
+
+        function handleFilterChange() {
+            canteenFilters.search = document.getElementById('filter-search').value.toLowerCase();
+            canteenFilters.category = document.getElementById('filter-category').value;
+            canteenFilters.trait = document.getElementById('filter-trait').value;
+            renderCanteenGrid();
+        }
+
+        function onSliderInput(type) {
+            let sMin = document.getElementById('slider-min');
+            let sMax = document.getElementById('slider-max');
+            let valMin = parseInt(sMin.value);
+            let valMax = parseInt(sMax.value);
+            
+            if (valMin >= valMax) {
+                if (type === 'min') sMin.value = valMax - 100;
+                if (type === 'max') sMax.value = valMin + 100;
+            }
+            
+            updateSliderVisuals();
+            canteenFilters.minSelected = parseInt(sMin.value);
+            canteenFilters.maxSelected = parseInt(sMax.value);
+            renderCanteenGrid();
+        }
+
+        function updateSliderVisuals() {
+            let sMin = document.getElementById('slider-min');
+            let sMax = document.getElementById('slider-max');
+            let trackFill = document.getElementById('slider-track-fill');
+            let displayMin = document.getElementById('display-min');
+            let displayMax = document.getElementById('display-max');
+            
+            if(!sMin || !sMax) return;
+
+            let valMin = parseInt(sMin.value);
+            let valMax = parseInt(sMax.value);
+            
+            displayMin.innerText = valMin;
+            displayMax.innerText = valMax;
+
+            let percentMin = ((valMin - sMin.min) / (sMin.max - sMin.min)) * 100;
+            let percentMax = ((valMax - sMax.min) / (sMax.max - sMax.min)) * 100;
+            
+            if(trackFill) {
+                trackFill.style.left = percentMin + "%";
+                trackFill.style.width = (percentMax - percentMin) + "%";
+            }
+        }
+
+        function toggleBreakRestriction(childId, breakKey) {
+            restrictions[childId].allowedBreaks[breakKey] = !restrictions[childId].allowedBreaks[breakKey];
+            render();
+        }
+
+        // --- FUNCION RESTRICCION INDIVIDUAL ---
+        function toggleItemRestriction(productId) {
+            const blockedArray = specificItemRestrictions[currentChildId];
+            const index = blockedArray.indexOf(productId);
+            
+            if (index > -1) {
+                blockedArray.splice(index, 1);
+                showNotification("Restricción individual eliminada.");
+            } else {
+                blockedArray.push(productId);
+                showNotification("Ítem restringido manualmente.", true);
+                removeFromCart(productId, currentChildId);
+                if (pendingMenuQuantities[productId]) {
+                    delete pendingMenuQuantities[productId];
+                }
+            }
+            renderCanteenGrid(); 
+        }
+
+        function renderCanteenGrid() {
+            const gridContainer = document.getElementById('canteen-grid');
+            if (!gridContainer) return;
+
+            const activeChildCant = children.find(c => c.id === currentChildId);
+            const activeRestr = restrictions[currentChildId];
+            let schoolProducts = productsBySchool[activeChildCant.school] || [];
+
+            if (canteenFilters.search !== '') {
+                schoolProducts = schoolProducts.filter(p => p.name.toLowerCase().includes(canteenFilters.search));
+            }
+            if (canteenFilters.category !== 'all') {
+                schoolProducts = schoolProducts.filter(p => p.category === canteenFilters.category);
+            }
+            schoolProducts = schoolProducts.filter(p => p.price >= canteenFilters.minSelected && p.price <= canteenFilters.maxSelected);
+            if (canteenFilters.trait !== 'all') {
+                schoolProducts = schoolProducts.filter(p => {
+                    if (canteenFilters.trait === 'notacc') return !p.hasTacc;
+                    if (canteenFilters.trait === 'nosugar') return !p.hasSugar;
+                    if (canteenFilters.trait === 'nopeanuts') return !p.hasPeanuts;
+                    if (canteenFilters.trait === 'vegan') return p.isVegan;
+                    return true;
+                });
+            }
+
+            if (schoolProducts.length === 0) {
+                gridContainer.innerHTML = `
+                    <div class="col-span-full py-12 text-center bg-white rounded-3xl border border-dashed border-gray-200 shadow-sm">
+                        <i class="fa-solid fa-face-frown-open text-5xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500 text-lg">No se encontraron productos que coincidan con los filtros aplicados.</p>
+                        <button onclick="resetFilters()" class="mt-4 bg-gray-100 text-gray-600 px-6 py-2 rounded-xl font-bold hover:bg-turquesa hover:text-white transition-colors"><i class="fa-solid fa-rotate-right mr-2"></i>Limpiar Filtros</button>
+                    </div>
+                `;
+                return;
+            }
+
+            gridContainer.innerHTML = schoolProducts.map(p => {
+                let blockReason = "";
+                
+                const isSpecificallyBlocked = specificItemRestrictions[currentChildId].includes(p.id);
+                
+                if (isSpecificallyBlocked) blockReason = "Restringido manualmente";
+                else if (activeRestr.noTacc && p.hasTacc) blockReason = "Contiene TACC";
+                else if (activeRestr.noSugar && p.hasSugar) blockReason = "Contiene Azúcar";
+                else if (activeRestr.noPeanuts && p.hasPeanuts) blockReason = "Contiene Maní";
+                else if (activeRestr.vegan && !p.isVegan) blockReason = "No es Vegano";
+
+                const isDisabled = blockReason !== "";
+                const inCartItem = cart.find(i => i.id === p.id && i.childId === currentChildId);
+                const isAdded = !!inCartItem;
+                const currentQty = isAdded ? inCartItem.quantity : (pendingMenuQuantities[p.id] || 1);
+
+                return `
+                    <div class="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm transition-all hover:shadow-md ${isDisabled ? 'item-disabled' : 'hover:-translate-y-1'} flex flex-col h-full">
+                        <div class="relative h-32 shrink-0">
+                            <img src="${p.img}" class="w-full h-full object-cover" alt="${p.name}">
+                            
+                            <button onclick="toggleItemRestriction(${p.id})" class="absolute top-2 left-2 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center shadow-md transition-all z-10 ${isSpecificallyBlocked ? 'text-red-500 ring-2 ring-red-500 bg-white' : 'text-gray-400 hover:text-red-500 hover:bg-white'}" title="${isSpecificallyBlocked ? 'Desbloquear ítem' : 'Restringir ítem'}">
+                                <i class="fa-solid ${isSpecificallyBlocked ? 'fa-lock' : 'fa-lock-open'} text-sm"></i>
+                            </button>
+
+                            ${p.hasTacc ? '<span class="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded-md text-[9px] font-bold text-gray-700 shadow-sm">CON TACC</span>' : '<span class="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-md text-[9px] font-bold shadow-sm">SIN TACC</span>'}
+                        </div>
+                        <div class="p-4 flex flex-col flex-grow">
+                            <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">${p.category}</p>
+                            <h3 class="text-base font-bold text-gray-800 mb-1 leading-tight flex-grow line-clamp-2">${p.name}</h3>
+                            <p class="text-turquesa font-bold text-lg mb-3">$${p.price.toLocaleString('es-AR')}</p>
+                            
+                            ${isDisabled ? 
+                                `<button class="w-full bg-gray-200 text-gray-600 font-bold py-2 rounded-xl cursor-not-allowed flex items-center justify-center gap-2 text-xs mt-auto">
+                                    <i class="fa-solid fa-ban"></i> ${blockReason}
+                                </button>` : 
+                                `
+                                <div class="mt-auto">
+                                    <div class="flex items-center justify-between gap-2 mb-3 bg-gray-50 p-1.5 rounded-xl border border-gray-100">
+                                        <button onclick="changeMenuQuantity(${p.id}, -1)" class="w-8 h-8 bg-white rounded-lg shadow-sm text-turquesa flex items-center justify-center hover:bg-gray-100 transition-colors"><i class="fa-solid fa-minus text-xs"></i></button>
+                                        <span class="font-bold w-6 text-center text-sm text-gray-800">${currentQty}</span>
+                                        <button onclick="changeMenuQuantity(${p.id}, 1)" class="w-8 h-8 bg-white rounded-lg shadow-sm text-turquesa flex items-center justify-center hover:bg-gray-100 transition-colors"><i class="fa-solid fa-plus text-xs"></i></button>
+                                    </div>
+                                    
+                                    ${isAdded ? 
+                                        `<button disabled class="w-full bg-green-500 text-white font-bold py-2 rounded-xl flex items-center justify-center gap-2 text-sm opacity-90 transition-all"><i class="fa-solid fa-check"></i> En el carrito</button>` :
+                                        `<button onclick="addToCart(${p.id})" class="w-full bg-turquesa text-white font-bold py-2 rounded-xl hover:bg-teal-900 transition-all flex items-center justify-center gap-2 text-sm shadow-sm"><i class="fa-solid fa-cart-plus"></i> Agregar</button>`
+                                    }
+                                </div>
+                                `
+                            }
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- MODALES ---
         function openChildModal() { showChildModal = true; render(); }
         function closeChildModal() { showChildModal = false; render(); }
         function switchChild(newId) {
             currentChildId = newId;
             showChildModal = false;
             pendingMenuQuantities = {};
+            const activeChild = children.find(c => c.id === currentChildId);
+            const schoolProducts = productsBySchool[activeChild.school] || [];
+            if (schoolProducts.length > 0) {
+                const prices = schoolProducts.map(p => p.price);
+                currentMinPrice = Math.min(...prices);
+                currentMaxPrice = Math.max(...prices);
+            }
+            resetFiltersLogic();
             render();
         }
 
         function openPurchaseDetails(id) { selectedPurchaseId = id; render(); }
         function closePurchaseDetails() { selectedPurchaseId = null; render(); }
 
-        // --- FUNCIONES DE CARRITO Y CHECKOUT ---
+        // --- CONTROL DE CARRITO ---
         function changeMenuQuantity(productId, delta) {
             const cartItem = cart.find(i => i.id === productId && i.childId === currentChildId);
             if (cartItem) {
@@ -267,7 +657,7 @@
                 if (!pendingMenuQuantities[productId]) pendingMenuQuantities[productId] = 1;
                 pendingMenuQuantities[productId] += delta;
                 if (pendingMenuQuantities[productId] < 1) pendingMenuQuantities[productId] = 1;
-                render();
+                renderCanteenGrid();
             }
         }
 
@@ -285,28 +675,42 @@
             
             updateCartUI();
             showNotification(`Se agregaron ${qtyToAdd}x "${product.name}" al carrito`);
-            render();
+            renderCanteenGrid();
         }
 
         function updateQuantity(productId, childId, delta) {
             const item = cart.find(i => i.id === productId && i.childId === childId);
             if (item) {
                 item.quantity += delta;
-                if (item.quantity <= 0) removeFromCart(productId, childId);
+                if (item.quantity <= 0) {
+                    removeFromCart(productId, childId);
+                    return;
+                }
             }
-            render();
+            if(currentView === 'canteen') renderCanteenGrid();
+            else render();
             updateCartUI();
         }
 
         function removeFromCart(productId, childId) {
             cart = cart.filter(item => !(item.id === productId && item.childId === childId));
-            render();
+            
+            // Si el niño se quedó sin items, limpiar sus datos de checkout temporal
+            const remainingItemsForChild = cart.some(item => item.childId === childId);
+            if (!remainingItemsForChild && cartCheckoutData[childId]) {
+                delete cartCheckoutData[childId];
+            }
+
+            if(currentView === 'canteen') renderCanteenGrid();
+            else render();
             updateCartUI();
         }
 
         function emptyCart() {
             cart = [];
+            cartCheckoutData = {};
             updateCartUI();
+            render();
         }
 
         function updateCartUI() {
@@ -317,60 +721,17 @@
             if (cartCountMobileElem) cartCountMobileElem.innerText = count;
         }
 
-        function showNotification(message, isWarning = false) {
-            const container = document.getElementById('notification-container');
-            const notif = document.createElement('div');
-            
-            const bgColor = isWarning ? 'bg-naranja' : 'bg-green-500';
-            const icon = isWarning ? 'fa-triangle-exclamation' : 'fa-circle-check';
-            
-            notif.className = `notification mt-4 ${bgColor} text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3 font-semibold z-50`;
-            notif.innerHTML = `<i class="fa-solid ${icon}"></i> ${message}`;
-            container.appendChild(notif);
-            setTimeout(() => notif.remove(), 4000); 
-        }
-
-        function generateWithdrawalCode() {
-            const animals = [
-                "Lobo", "Tigre", "Puma", "Oso", "Gato", "Perro", "Zorro", "Rana", 
-                "Sapo", "Búho", "Pato", "Cisne", "Loro", "Pez", "Foca", "Cebra", 
-                "Morsa", "Koala", "Panda", "Gallo", "Pollo", "Ganso", "Toro", "Vaca"
-            ];
-            return animals[Math.floor(Math.random() * animals.length)];
-        }
-
-        function formatCurrency(amount) {
-            const isNegative = amount < 0;
-            const absAmount = Math.abs(amount);
-            return (isNegative ? '-$' : '$') + absAmount.toLocaleString('es-AR');
-        }
-
-        function getBalanceWarnings() {
-            const warnings = [];
-            const spentPerChild = {};
-            cart.forEach(item => {
-                spentPerChild[item.childId] = (spentPerChild[item.childId] || 0) + (item.price * item.quantity);
-            });
-            for (const childId in spentPerChild) {
-                const child = children.find(c => c.id == childId);
-                const newBalance = child.balance - spentPerChild[childId];
-                if (newBalance < 0) {
-                    warnings.push({ name: child.name, newBalance: newBalance });
-                }
-            }
-            return warnings;
-        }
-
-        // --- FLUJO DE COMPRA ---
         function goToConfirm() {
-            checkoutDate = document.getElementById('order-date')?.value || getNextValidDateStr();
-            checkoutBreak = document.getElementById('order-break')?.value || '1er Recreo';
             navigateTo('confirm');
         }
 
         function processPurchase() {
+            // Filtrar SOLO los items de los alumnos que están seleccionados
+            const itemsToProcess = cart.filter(item => cartCheckoutData[item.childId] && cartCheckoutData[item.childId].selected);
+            const itemsToKeep = cart.filter(item => !(cartCheckoutData[item.childId] && cartCheckoutData[item.childId].selected));
+
             const spentPerChild = {};
-            const groupedCart = cart.reduce((acc, item) => {
+            const groupedCart = itemsToProcess.reduce((acc, item) => {
                 if (!acc[item.childId]) acc[item.childId] = [];
                 acc[item.childId].push(item);
                 spentPerChild[item.childId] = (spentPerChild[item.childId] || 0) + (item.price * item.quantity);
@@ -383,23 +744,21 @@
             Object.keys(groupedCart).forEach(childId => {
                 const child = children.find(c => c.id == childId);
                 const childTotal = spentPerChild[childId];
+                const childData = cartCheckoutData[childId];
                 const code = generateWithdrawalCode().toUpperCase();
                 
-                // Actualizar saldo
                 if (child) {
                     child.balance -= childTotal;
-                    // Guardar el ID del primer hijo que quede en negativo
                     if (child.balance < 0 && !lastNegativeChildId) {
                         lastNegativeChildId = child.id;
                     }
                 }
 
-                // Guardar Ticket de Compra
                 const newPurchase = {
                     id: Date.now() + Math.floor(Math.random() * 1000),
                     childId: parseInt(childId),
-                    date: checkoutDate,
-                    breakTime: checkoutBreak,
+                    date: childData.date,
+                    breakTime: childData.breakTime,
                     total: childTotal,
                     status: 'Pendiente',
                     code: code,
@@ -410,16 +769,23 @@
                 lastCheckoutCodes.push({ childName: child.name, img: child.img, code: code });
             });
 
-            emptyCart();
+            // Conservar en el carrito solo a los alumnos que NO fueron procesados (deseleccionados)
+            cart = itemsToKeep;
+            
+            // Limpiar datos temporales de los procesados
+            Object.keys(groupedCart).forEach(childId => {
+                delete cartCheckoutData[childId];
+            });
+
+            updateCartUI();
             navigateTo('success');
         }
 
-        // --- RENDERIZADO DE VISTAS ---
+        // --- RENDERIZADO PRINCIPAL ---
         function render() {
             const app = document.getElementById('app');
             const mainNav = document.getElementById('main-nav');
             
-            // Ocultar Navbar durante la presentación inicial
             if (['intro1', 'intro2', 'intro3'].includes(currentView)) {
                 mainNav.style.display = 'none';
             } else {
@@ -429,7 +795,6 @@
             let modalHTML = '';
             let modalDetailsHTML = '';
 
-            // Modal Selector Alumno
             if (showChildModal) {
                 modalHTML = `
                     <div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
@@ -455,7 +820,6 @@
                 `;
             }
 
-            // Modal Detalles Compra
             if (selectedPurchaseId) {
                 const p = purchases.find(pur => pur.id === selectedPurchaseId);
                 const child = children.find(c => c.id === p.childId);
@@ -526,19 +890,14 @@
             }
             
             switch (currentView) {
-                // --- VISTAS DE PRESENTACIÓN (DIAPOSITIVAS) ---
                 case 'intro1':
                     app.innerHTML = `
                         <div class="fixed inset-0 bg-turquesa flex flex-col items-center justify-center text-center slide-anim z-50 p-4">
                             <div class="bg-white p-12 md:p-16 rounded-[3rem] shadow-2xl flex flex-col items-center max-w-lg w-full relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-turquesa via-lila to-naranja"></div>
-                                
-                                <!-- Logo Local: Asegúrate de tener 'logo.png' en tu carpeta -->
                                 <img src="./logo.png" alt="Logo Recred" class="w-48 h-48 object-contain mb-6 drop-shadow-sm" onerror="this.src='https://ui-avatars.com/api/?name=Re+Cred&background=FFC107&color=0D6B78&size=200&font-size=0.4'">
-                                
                                 <h1 class="text-6xl md:text-7xl font-urbanist font-bold text-turquesa tracking-tight mb-3">RECRED</h1>
                                 <p class="text-gray-500 mb-10 text-xl font-medium tracking-wide">Gestión inteligente de cantinas escolares</p>
-                                
                                 <button onclick="navigateTo('intro2')" class="w-full bg-naranja text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-orange-600 transition-all text-xl flex items-center justify-center gap-3">
                                     Continuar <i class="fa-solid fa-arrow-right"></i>
                                 </button>
@@ -601,8 +960,6 @@
                         </div>
                     `;
                     break;
-
-                // --- FIN DE VISTAS DE PRESENTACIÓN ---
 
                 case 'home':
                     const groupedChildren = children.reduce((acc, child) => {
@@ -755,7 +1112,6 @@
                                 </div>
                                 <div class="space-y-4">
                                     
-                                    <!-- SIN TACC -->
                                     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-red-100 transition-all">
                                         <div class="flex items-center gap-4">
                                             <div class="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-lg"><i class="fa-solid fa-wheat-awn-circle-exclamation"></i></div>
@@ -770,7 +1126,6 @@
                                         </label>
                                     </div>
 
-                                    <!-- SIN AZÚCAR -->
                                     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-blue-100 transition-all">
                                         <div class="flex items-center gap-4">
                                             <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-lg"><i class="fa-solid fa-cubes-stacked"></i></div>
@@ -785,7 +1140,6 @@
                                         </label>
                                     </div>
 
-                                    <!-- ALERGIA MANÍ -->
                                     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-orange-100 transition-all">
                                         <div class="flex items-center gap-4">
                                             <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-lg"><i class="fa-solid fa-seedling"></i></div>
@@ -800,7 +1154,6 @@
                                         </label>
                                     </div>
 
-                                    <!-- VEGANO -->
                                     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-green-100 transition-all">
                                         <div class="flex items-center gap-4">
                                             <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-lg"><i class="fa-solid fa-leaf"></i></div>
@@ -816,7 +1169,44 @@
                                     </div>
 
                                 </div>
-                                <button onclick="navigateTo('home')" class="w-full mt-8 bg-turquesa text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-teal-900 transition-all">Guardar Cambios</button>
+
+                                <h4 class="font-bold text-gray-700 border-b pb-2 mt-8 mb-4 text-sm uppercase tracking-wide">Horarios de Compra (Solo Alumno)</h4>
+                                <div class="bg-gray-50 p-5 rounded-2xl border border-gray-100 mb-6">
+                                    <div class="flex flex-col gap-4">
+                                        <div class="flex items-center gap-4 mb-2">
+                                            <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-lg shrink-0"><i class="fa-regular fa-clock"></i></div>
+                                            <div>
+                                                <p class="font-bold text-gray-800">Horarios Permitidos</p>
+                                                <p class="text-xs text-gray-500 leading-tight mt-1">Selecciona en qué momentos el alumno puede usar su cuenta para compras espontáneas.</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                            <label class="relative flex flex-col items-center justify-center p-3 border-2 rounded-xl cursor-pointer transition-all text-center ${childRestr.allowedBreaks['1er'] ? 'border-green-500 bg-green-50 text-green-600 shadow-sm' : 'border-gray-200 bg-white text-turquesa hover:border-turquesa/50'}">
+                                                <input type="checkbox" class="sr-only" onchange="toggleBreakRestriction(${childData.id}, '1er')" ${childRestr.allowedBreaks['1er'] ? 'checked' : ''}>
+                                                ${childRestr.allowedBreaks['1er'] ? '<i class="fa-solid fa-circle-check text-xl mb-1"></i>' : '<i class="fa-regular fa-circle text-xl mb-1 opacity-40"></i>'}
+                                                <span class="font-bold text-sm leading-tight">Primer<br>Recreo</span>
+                                            </label>
+                                            <label class="relative flex flex-col items-center justify-center p-3 border-2 rounded-xl cursor-pointer transition-all text-center ${childRestr.allowedBreaks['2do'] ? 'border-green-500 bg-green-50 text-green-600 shadow-sm' : 'border-gray-200 bg-white text-turquesa hover:border-turquesa/50'}">
+                                                <input type="checkbox" class="sr-only" onchange="toggleBreakRestriction(${childData.id}, '2do')" ${childRestr.allowedBreaks['2do'] ? 'checked' : ''}>
+                                                ${childRestr.allowedBreaks['2do'] ? '<i class="fa-solid fa-circle-check text-xl mb-1"></i>' : '<i class="fa-regular fa-circle text-xl mb-1 opacity-40"></i>'}
+                                                <span class="font-bold text-sm leading-tight">Segundo<br>Recreo</span>
+                                            </label>
+                                            <label class="relative flex flex-col items-center justify-center p-3 border-2 rounded-xl cursor-pointer transition-all text-center ${childRestr.allowedBreaks['mediodia'] ? 'border-green-500 bg-green-50 text-green-600 shadow-sm' : 'border-gray-200 bg-white text-turquesa hover:border-turquesa/50'}">
+                                                <input type="checkbox" class="sr-only" onchange="toggleBreakRestriction(${childData.id}, 'mediodia')" ${childRestr.allowedBreaks['mediodia'] ? 'checked' : ''}>
+                                                ${childRestr.allowedBreaks['mediodia'] ? '<i class="fa-solid fa-circle-check text-xl mb-1"></i>' : '<i class="fa-regular fa-circle text-xl mb-1 opacity-40"></i>'}
+                                                <span class="font-bold text-sm leading-tight">Mediodía</span>
+                                            </label>
+                                            <label class="relative flex flex-col items-center justify-center p-3 border-2 rounded-xl cursor-pointer transition-all text-center ${childRestr.allowedBreaks['fuera'] ? 'border-green-500 bg-green-50 text-green-600 shadow-sm' : 'border-gray-200 bg-white text-turquesa hover:border-turquesa/50'}">
+                                                <input type="checkbox" class="sr-only" onchange="toggleBreakRestriction(${childData.id}, 'fuera')" ${childRestr.allowedBreaks['fuera'] ? 'checked' : ''}>
+                                                ${childRestr.allowedBreaks['fuera'] ? '<i class="fa-solid fa-circle-check text-xl mb-1"></i>' : '<i class="fa-regular fa-circle text-xl mb-1 opacity-40"></i>'}
+                                                <span class="font-bold text-sm leading-tight">Fuera de<br>hora</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button onclick="navigateTo('home')" class="w-full mt-2 bg-turquesa text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-teal-900 transition-all">Guardar Cambios</button>
                             </div>
                         </div>
                     `;
@@ -828,7 +1218,6 @@
                     app.innerHTML = `
                         <div class="max-w-2xl mx-auto py-12">
                             <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 text-center relative overflow-hidden">
-                                <!-- Detalle visual superior -->
                                 <div class="absolute top-0 left-0 w-full h-2 bg-[#009EE3]"></div> 
                                 
                                 <div class="w-20 h-20 bg-blue-50 text-[#009EE3] rounded-full flex items-center justify-center text-4xl mx-auto mb-6 shadow-sm">
@@ -859,9 +1248,7 @@
                 case 'canteen':
                     const activeChildCant = children.find(c => c.id === currentChildId);
                     const activeRestr = restrictions[currentChildId];
-                    const schoolProducts = productsBySchool[activeChildCant.school] || [];
                     
-                    // Identificamos cuántas/cuáles restricciones están activas para mostrar en el título
                     let activeBadges = [];
                     if(activeRestr.noTacc) activeBadges.push('SIN TACC');
                     if(activeRestr.noSugar) activeBadges.push('SIN AZÚCAR');
@@ -870,12 +1257,12 @@
 
                     app.innerHTML = `
                         ${modalHTML}
-                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+                        <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
                             <div>
                                 <h2 class="text-3xl font-bold text-turquesa">Menú de Cantina</h2>
                                 <p class="text-gray-500 flex items-center flex-wrap gap-2 mt-1">
                                     Comprando para: 
-                                    <span class="font-bold text-turquesa bg-turquesa/10 px-3 py-1 rounded-full flex items-center gap-2">
+                                    <span class="font-bold text-turquesa bg-turquesa/10 px-3 py-1 rounded-full flex items-center gap-2 shadow-sm border border-turquesa/20">
                                         <img src="${activeChildCant.img}" class="w-5 h-5 rounded-full object-cover">
                                         ${activeChildCant.name}
                                         <button onclick="openChildModal()" class="text-lila hover:text-purple-700 ml-1 bg-white rounded-full w-5 h-5 flex justify-center items-center shadow-sm" title="Cambiar de alumno">
@@ -883,6 +1270,10 @@
                                         </button>
                                     </span>
                                     en <span class="font-bold text-gray-700">${activeChildCant.school}</span>
+                                    <span class="hidden md:inline text-gray-300">|</span>
+                                    <span class="bg-gray-100 px-3 py-1 rounded-full text-sm">
+                                        Saldo: <strong class="${activeChildCant.balance < 0 ? 'text-red-500' : 'text-turquesa'}">${formatCurrency(activeChildCant.balance)}</strong>
+                                    </span>
                                 </p>
                             </div>
                             
@@ -894,61 +1285,62 @@
                                 </div>
                             ` : ''}
                         </div>
+
+                        <!-- BARRA DE FILTROS -->
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-8 flex flex-col lg:flex-row gap-6 items-center">
+                            <div class="relative w-full lg:w-1/3 shrink-0">
+                                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                <input type="text" id="filter-search" value="${canteenFilters.search}" oninput="handleFilterChange()" placeholder="Buscar por nombre..." class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-turquesa transition-colors text-sm font-medium">
+                            </div>
+                            
+                            <div class="w-full lg:w-1/3 px-4 flex flex-col justify-center">
+                                <div class="flex justify-between text-xs font-bold text-gray-400 uppercase mb-2">
+                                    <span>Precio Mínimo: <span id="display-min" class="text-turquesa"></span></span>
+                                    <span>Precio Máximo: <span id="display-max" class="text-turquesa"></span></span>
+                                </div>
+                                <div class="slider-container">
+                                    <div class="slider-track-bg"></div>
+                                    <div id="slider-track-fill" class="slider-track-fill"></div>
+                                    <input type="range" id="slider-min" min="${currentMinPrice}" max="${currentMaxPrice}" value="${canteenFilters.minSelected}" step="50" oninput="onSliderInput('min')" class="slider-input">
+                                    <input type="range" id="slider-max" min="${currentMinPrice}" max="${currentMaxPrice}" value="${canteenFilters.maxSelected}" step="50" oninput="onSliderInput('max')" class="slider-input">
+                                </div>
+                            </div>
+
+                            <div class="flex gap-2 w-full lg:w-1/3 overflow-x-auto pb-2 lg:pb-0 hide-scrollbar justify-end">
+                                <select id="filter-category" onchange="handleFilterChange()" class="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-turquesa text-sm font-medium text-gray-700 shrink-0">
+                                    <option value="all" ${canteenFilters.category === 'all' ? 'selected' : ''}>Categorías</option>
+                                    <option value="Comidas" ${canteenFilters.category === 'Comidas' ? 'selected' : ''}>Comidas</option>
+                                    <option value="Bebidas" ${canteenFilters.category === 'Bebidas' ? 'selected' : ''}>Bebidas</option>
+                                    <option value="Snacks" ${canteenFilters.category === 'Snacks' ? 'selected' : ''}>Snacks</option>
+                                </select>
+
+                                <select id="filter-trait" onchange="handleFilterChange()" class="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-turquesa text-sm font-medium text-gray-700 shrink-0">
+                                    <option value="all" ${canteenFilters.trait === 'all' ? 'selected' : ''}>Componentes</option>
+                                    <option value="notacc" ${canteenFilters.trait === 'notacc' ? 'selected' : ''}>Apto Celíacos</option>
+                                    <option value="vegan" ${canteenFilters.trait === 'vegan' ? 'selected' : ''}>Solo Veganos</option>
+                                    <option value="nosugar" ${canteenFilters.trait === 'nosugar' ? 'selected' : ''}>Sin Azúcar</option>
+                                    <option value="nopeanuts" ${canteenFilters.trait === 'nopeanuts' ? 'selected' : ''}>Sin Maní</option>
+                                </select>
+                            </div>
+                        </div>
                         
-                        <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-6">
-                            ${schoolProducts.length === 0 ? `<p class="col-span-full text-gray-500 italic">No hay productos disponibles para esta escuela.</p>` : ''}
-                            ${schoolProducts.map(p => {
-                                // Lógica de bloqueo inteligente
-                                let blockReason = "";
-                                if (activeRestr.noTacc && p.hasTacc) blockReason = "Contiene TACC";
-                                else if (activeRestr.noSugar && p.hasSugar) blockReason = "Contiene Azúcar";
-                                else if (activeRestr.noPeanuts && p.hasPeanuts) blockReason = "Contiene Maní";
-                                else if (activeRestr.vegan && !p.isVegan) blockReason = "No es Vegano";
-
-                                const isDisabled = blockReason !== "";
-
-                                const inCartItem = cart.find(i => i.id === p.id && i.childId === currentChildId);
-                                const isAdded = !!inCartItem;
-                                const currentQty = isAdded ? inCartItem.quantity : (pendingMenuQuantities[p.id] || 1);
-
-                                return `
-                                    <div class="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm transition-all hover:shadow-md ${isDisabled ? 'item-disabled' : 'hover:-translate-y-1'} flex flex-col h-full">
-                                        <div class="relative h-32 shrink-0">
-                                            <img src="${p.img}" class="w-full h-full object-cover" alt="${p.name}">
-                                        </div>
-                                        <div class="p-4 flex flex-col flex-grow">
-                                            <h3 class="text-base font-bold text-gray-800 mb-1 leading-tight flex-grow line-clamp-2">${p.name}</h3>
-                                            <p class="text-turquesa font-bold text-lg mb-3">$${p.price.toLocaleString('es-AR')}</p>
-                                            
-                                            ${isDisabled ? 
-                                                `<button class="w-full bg-gray-200 text-gray-600 font-bold py-2 rounded-xl cursor-not-allowed flex items-center justify-center gap-2 text-xs mt-auto">
-                                                    <i class="fa-solid fa-ban"></i> ${blockReason}
-                                                </button>` : 
-                                                `
-                                                <div class="mt-auto">
-                                                    <div class="flex items-center justify-between gap-2 mb-3 bg-gray-50 p-1.5 rounded-xl border border-gray-100">
-                                                        <button onclick="changeMenuQuantity(${p.id}, -1)" class="w-8 h-8 bg-white rounded-lg shadow-sm text-turquesa flex items-center justify-center hover:bg-gray-100 transition-colors"><i class="fa-solid fa-minus text-xs"></i></button>
-                                                        <span class="font-bold w-6 text-center text-sm text-gray-800">${currentQty}</span>
-                                                        <button onclick="changeMenuQuantity(${p.id}, 1)" class="w-8 h-8 bg-white rounded-lg shadow-sm text-turquesa flex items-center justify-center hover:bg-gray-100 transition-colors"><i class="fa-solid fa-plus text-xs"></i></button>
-                                                    </div>
-                                                    
-                                                    ${isAdded ? 
-                                                        `<button disabled class="w-full bg-green-500 text-white font-bold py-2 rounded-xl flex items-center justify-center gap-2 text-sm opacity-90 transition-all"><i class="fa-solid fa-check"></i> En el carrito</button>` :
-                                                        `<button onclick="addToCart(${p.id})" class="w-full bg-turquesa text-white font-bold py-2 rounded-xl hover:bg-teal-900 transition-all flex items-center justify-center gap-2 text-sm shadow-sm"><i class="fa-solid fa-cart-plus"></i> Agregar</button>`
-                                                    }
-                                                </div>
-                                                `
-                                            }
-                                        </div>
-                                    </div>
-                                `;
-                            }).join('')}
+                        <!-- CONTENEDOR DEL GRID -->
+                        <div id="canteen-grid" class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-6">
+                            <!-- Se renderiza via JS -->
                         </div>
                     `;
+
+                    updateSliderVisuals(); 
+                    renderCanteenGrid();
                     break;
 
                 case 'cart':
-                    const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                    const cartTotal = cart.reduce((sum, item) => {
+                        if (cartCheckoutData[item.childId] && cartCheckoutData[item.childId].selected) {
+                            return sum + (item.price * item.quantity);
+                        }
+                        return sum;
+                    }, 0);
                     
                     const groupedCart = cart.reduce((acc, item) => {
                         if (!acc[item.childId]) acc[item.childId] = [];
@@ -957,11 +1349,10 @@
                     }, {});
 
                     const todayStr = getTodayString();
-                    const nextValidDate = getNextValidDateStr();
-
                     const cartWarnings = getBalanceWarnings();
+                    
                     const cartWarningsHTML = cartWarnings.length > 0 ? `
-                        <div class="bg-orange-50 border border-naranja text-naranja p-5 rounded-3xl shadow-sm">
+                        <div class="bg-orange-50 border border-naranja text-naranja p-5 rounded-3xl shadow-sm mb-6">
                             <h4 class="font-bold flex items-center gap-2 mb-2"><i class="fa-solid fa-triangle-exclamation"></i> Atención: Saldo en negativo</h4>
                             <ul class="text-sm space-y-1 mb-2">
                                 ${cartWarnings.map(w => `<li>El saldo de <strong>${w.name}</strong> quedará en <span class="font-bold text-red-500">${formatCurrency(w.newBalance)}</span>.</li>`).join('')}
@@ -969,6 +1360,8 @@
                             <p class="text-xs italic text-gray-600">Puede continuar con la compra, pero le solicitamos recargar a la brevedad.</p>
                         </div>
                     ` : '';
+
+                    const isAnythingSelected = Object.values(cartCheckoutData).some(data => data.selected);
 
                     app.innerHTML = `
                         <h2 class="text-3xl font-bold text-turquesa mb-8">Mi Carrito Global</h2>
@@ -985,12 +1378,24 @@
                                 ` : Object.keys(groupedCart).map(childId => {
                                     const child = children.find(c => c.id == childId);
                                     const childItems = groupedCart[childId];
+                                    const checkoutData = cartCheckoutData[childId] || { selected: true, date: getNextValidDateStr(), breakTime: '1er Recreo' };
+                                    
                                     return `
-                                        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-                                            <div class="bg-turquesa/5 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
-                                                <img src="${child.img}" class="w-8 h-8 rounded-full object-cover border border-turquesa/30">
-                                                <h3 class="font-bold text-turquesa">Pedido para ${child.name}</h3>
+                                        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden transition-all ${!checkoutData.selected ? 'opacity-60 grayscale-[0.3]' : ''}">
+                                            
+                                            <!-- ENCABEZADO DE TARJETA CON CHECKBOX Y SALDO -->
+                                            <div class="bg-turquesa/5 px-6 py-4 border-b border-gray-100 flex items-center justify-between cursor-pointer hover:bg-turquesa/10 transition-colors" onclick="toggleCartChild(${childId})">
+                                                <div class="flex items-center gap-3">
+                                                    <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleCartChild(${childId})" ${checkoutData.selected ? 'checked' : ''} class="w-5 h-5 text-turquesa rounded border-gray-300 focus:ring-turquesa cursor-pointer">
+                                                    <img src="${child.img}" class="w-8 h-8 rounded-full object-cover border border-turquesa/30">
+                                                    <h3 class="font-bold text-turquesa">Pedido para ${child.name}</h3>
+                                                </div>
+                                                <div class="text-right text-sm">
+                                                    <span class="text-gray-500 font-medium">Saldo: </span>
+                                                    <span class="font-bold ${child.balance < 0 ? 'text-red-500' : 'text-turquesa'}">${formatCurrency(child.balance)}</span>
+                                                </div>
                                             </div>
+
                                             <div class="p-6 space-y-4">
                                                 ${childItems.map(item => `
                                                     <div class="flex items-center gap-4">
@@ -1008,34 +1413,54 @@
                                                     </div>
                                                 `).join('')}
                                             </div>
+
+                                            <!-- SELECTORES DE FECHA Y RECREO INDIVIDUALES -->
+                                            <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row gap-4">
+                                                <div class="w-full sm:w-1/2">
+                                                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Fecha de Retiro</label>
+                                                    <input type="date" value="${checkoutData.date}" min="${todayStr}" onchange="handleIndividualDateChange(this, ${childId})" class="w-full bg-white border border-gray-200 rounded-xl p-2.5 outline-none focus:border-turquesa text-sm ${!checkoutData.selected ? 'cursor-not-allowed text-gray-400' : 'text-gray-800'}" ${!checkoutData.selected ? 'disabled' : ''}>
+                                                </div>
+                                                <div class="w-full sm:w-1/2">
+                                                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Momento</label>
+                                                    <select onchange="updateCartChildData(${childId}, 'breakTime', this.value)" class="w-full bg-white border border-gray-200 rounded-xl p-2.5 outline-none focus:border-turquesa text-sm ${!checkoutData.selected ? 'cursor-not-allowed text-gray-400' : 'text-gray-800'}" ${!checkoutData.selected ? 'disabled' : ''}>
+                                                        <option value="1er Recreo" ${checkoutData.breakTime === '1er Recreo' ? 'selected' : ''}>Primer Recreo</option>
+                                                        <option value="2do Recreo" ${checkoutData.breakTime === '2do Recreo' ? 'selected' : ''}>Segundo Recreo</option>
+                                                        <option value="Mediodía" ${checkoutData.breakTime === 'Mediodía' ? 'selected' : ''}>Mediodía</option>
+                                                        <option value="Fuera de hora" ${checkoutData.breakTime === 'Fuera de hora' ? 'selected' : ''}>Fuera de hora</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
                                         </div>
                                     `;
                                 }).join('')}
                             </div>
                             
+                            <!-- RESUMEN DE ORDEN A LA DERECHA -->
                             <div class="space-y-6">
                                 ${cartWarningsHTML}
                                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 sticky top-24">
                                     <h3 class="font-bold text-lg mb-4 text-gray-800">Detalles de la Orden</h3>
-                                    <div class="space-y-4 mb-6">
-                                        <div>
-                                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Día de entrega (Global)</label>
-                                            <input type="date" id="order-date" min="${todayStr}" value="${nextValidDate}" onchange="handleDateChange(this)" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-turquesa">
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Recreo a retirar</label>
-                                            <select id="order-break" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-turquesa">
-                                                <option value="1er Recreo">1er Recreo</option>
-                                                <option value="2do Recreo">2do Recreo</option>
-                                            </select>
-                                        </div>
+                                    
+                                    <div class="space-y-2 mb-6">
+                                        ${Object.keys(groupedCart).map(childId => {
+                                            const child = children.find(c => c.id == childId);
+                                            const checkoutData = cartCheckoutData[childId];
+                                            if (!checkoutData || !checkoutData.selected) return ''; // Ignorar deseleccionados
+                                            
+                                            const childSubtotal = groupedCart[childId].reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                                            
+                                            return `
+                                                <div class="flex justify-between items-center text-sm">
+                                                    <span class="text-gray-600">${child.name}</span>
+                                                    <span class="font-semibold text-gray-800">$${childSubtotal.toLocaleString('es-AR')}</span>
+                                                </div>
+                                            `;
+                                        }).join('')}
+                                        ${!isAnythingSelected && cart.length > 0 ? '<p class="text-sm text-gray-500 italic">No hay pedidos seleccionados para pagar.</p>' : ''}
                                     </div>
                                     
                                     <div class="border-t pt-4 mb-6">
-                                        <div class="flex justify-between items-center mb-2">
-                                            <span class="text-gray-500">Subtotal de la orden</span>
-                                            <span class="font-semibold text-gray-800">$${cartTotal.toLocaleString('es-AR')}</span>
-                                        </div>
                                         <div class="flex justify-between items-center text-xl font-bold">
                                             <span class="text-turquesa">Total a Pagar</span>
                                             <span class="text-turquesa">$${cartTotal.toLocaleString('es-AR')}</span>
@@ -1043,7 +1468,7 @@
                                     </div>
 
                                     <div class="flex flex-col gap-3">
-                                        <button onclick="${cart.length > 0 ? 'goToConfirm()' : ''}" class="w-full bg-turquesa text-white font-bold py-4 rounded-2xl shadow-lg transition-all ${cart.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-teal-900 active:scale-[0.98]'}" ${cart.length === 0 ? 'disabled' : ''}>Pagar Orden Completa</button>
+                                        <button onclick="${isAnythingSelected ? 'goToConfirm()' : ''}" class="w-full bg-turquesa text-white font-bold py-4 rounded-2xl shadow-lg transition-all ${!isAnythingSelected ? 'opacity-50 cursor-not-allowed' : 'hover:bg-teal-900 active:scale-[0.98]'}" ${!isAnythingSelected ? 'disabled' : ''}>Avanzar al Pago</button>
                                         <div class="grid grid-cols-2 gap-3">
                                             <button onclick="emptyCart()" class="bg-gray-100 text-gray-600 font-bold py-3 rounded-xl hover:bg-gray-200 transition-all text-xs">Vaciar Carrito</button>
                                             <button onclick="navigateTo('home')" class="bg-lila text-white font-bold py-3 rounded-xl hover:bg-purple-600 transition-all text-xs">${cart.length === 0 ? 'Volver al Inicio' : 'Seguir comprando'}</button>
@@ -1056,20 +1481,27 @@
                     break;
 
                 case 'confirm':
-                    const cTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                    const confirmCartTotal = cart.reduce((sum, item) => {
+                        if (cartCheckoutData[item.childId] && cartCheckoutData[item.childId].selected) {
+                            return sum + (item.price * item.quantity);
+                        }
+                        return sum;
+                    }, 0);
                     
-                    const groupedConfirm = cart.reduce((acc, item) => {
-                        if (!acc[item.childId]) acc[item.childId] = [];
-                        acc[item.childId].push(item);
+                    const confirmGroupedCart = cart.reduce((acc, item) => {
+                        if (cartCheckoutData[item.childId] && cartCheckoutData[item.childId].selected) {
+                            if (!acc[item.childId]) acc[item.childId] = [];
+                            acc[item.childId].push(item);
+                        }
                         return acc;
                     }, {});
 
-                    const confirmWarnings = getBalanceWarnings();
-                    const confirmWarningsHTML = confirmWarnings.length > 0 ? `
+                    const confirmWarningsData = getBalanceWarnings();
+                    const confirmWarningsHTMLData = confirmWarningsData.length > 0 ? `
                         <div class="bg-orange-50 border border-naranja text-naranja p-5 rounded-2xl mb-6 shadow-sm relative z-10">
                             <h4 class="font-bold flex items-center gap-2 mb-2"><i class="fa-solid fa-triangle-exclamation"></i> Atención: Saldo en negativo</h4>
                             <ul class="text-sm space-y-1 mb-2">
-                                ${confirmWarnings.map(w => `<li>El saldo de <strong>${w.name}</strong> quedará en <span class="font-bold text-red-500">${formatCurrency(w.newBalance)}</span>.</li>`).join('')}
+                                ${confirmWarningsData.map(w => `<li>El saldo de <strong>${w.name}</strong> quedará en <span class="font-bold text-red-500">${formatCurrency(w.newBalance)}</span>.</li>`).join('')}
                             </ul>
                             <p class="text-xs italic text-gray-600">Por favor, regularice el saldo tras finalizar el pago.</p>
                         </div>
@@ -1082,31 +1514,26 @@
                             
                             <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 mb-6 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-full h-1.5 bg-turquesa"></div>
-                                ${confirmWarningsHTML}
-                                <div class="bg-gray-50 p-5 rounded-2xl flex justify-around mb-8 text-center">
-                                    <div>
-                                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Fecha de Retiro</p>
-                                        <p class="font-bold text-gray-800">${formatDisplayDate(checkoutDate)}</p>
-                                    </div>
-                                    <div class="w-px bg-gray-200"></div>
-                                    <div>
-                                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Momento</p>
-                                        <p class="font-bold text-gray-800">${checkoutBreak}</p>
-                                    </div>
-                                </div>
-
-                                <div class="space-y-6 mb-8">
+                                ${confirmWarningsHTMLData}
+                                
+                                <div class="space-y-6 mb-8 mt-4">
                                     <h4 class="font-bold text-gray-700 border-b pb-2 flex justify-between">
-                                        <span>Items por Alumno</span>
-                                        <span class="text-xs font-normal text-gray-400 italic">No modificable</span>
+                                        <span>Resumen de Pedidos a procesar</span>
+                                        <span class="text-xs font-normal text-gray-400 italic">No modificable aquí</span>
                                     </h4>
                                     
-                                    ${Object.keys(groupedConfirm).map(childId => {
+                                    ${Object.keys(confirmGroupedCart).map(childId => {
                                         const child = children.find(c => c.id == childId);
+                                        const cData = cartCheckoutData[childId];
                                         return `
                                             <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                                                <p class="text-xs font-bold text-turquesa mb-2 uppercase tracking-wide">Para ${child.name}</p>
-                                                ${groupedConfirm[childId].map(item => `
+                                                <div class="flex justify-between items-start border-b border-gray-200 pb-3 mb-3">
+                                                    <div>
+                                                        <p class="text-xs font-bold text-turquesa uppercase tracking-wide">Para ${child.name}</p>
+                                                        <p class="text-[11px] text-gray-500 mt-1"><i class="fa-regular fa-calendar mr-1"></i> ${formatDisplayDate(cData.date)} &bull; <i class="fa-regular fa-clock mr-1"></i> ${cData.breakTime}</p>
+                                                    </div>
+                                                </div>
+                                                ${confirmGroupedCart[childId].map(item => `
                                                     <div class="flex justify-between text-sm py-1">
                                                         <span class="text-gray-600"><span class="font-bold text-gray-800">${item.quantity}x</span> ${item.name}</span>
                                                         <span class="font-bold text-gray-800">$${(item.price * item.quantity).toLocaleString('es-AR')}</span>
@@ -1118,15 +1545,15 @@
                                     
                                     <div class="border-t border-dashed pt-4 flex justify-between text-xl font-bold text-turquesa">
                                         <span>Total Final de la Orden</span>
-                                        <span>$${cTotal.toLocaleString('es-AR')}</span>
+                                        <span>$${confirmCartTotal.toLocaleString('es-AR')}</span>
                                     </div>
                                 </div>
 
                                 <div class="flex flex-col gap-3">
                                     <button onclick="processPurchase()" class="w-full bg-turquesa text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-teal-900 transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-lock"></i> Confirmar y Pagar</button>
                                     <div class="grid grid-cols-2 gap-3">
-                                        <button onclick="emptyCart(); navigateTo('cart');" class="bg-gray-100 text-gray-600 font-bold py-3 rounded-xl text-xs hover:bg-gray-200 transition-all">Vaciar Carrito</button>
-                                        <button onclick="navigateTo('home')" class="bg-lila text-white font-bold py-3 rounded-xl text-xs hover:bg-purple-600 transition-all">Volver al Inicio</button>
+                                        <button onclick="navigateTo('cart')" class="bg-gray-100 text-gray-600 font-bold py-3 rounded-xl text-xs hover:bg-gray-200 transition-all">Volver al carrito</button>
+                                        <button onclick="navigateTo('home')" class="bg-lila text-white font-bold py-3 rounded-xl text-xs hover:bg-purple-600 transition-all">Cancelar y salir</button>
                                     </div>
                                 </div>
                             </div>
@@ -1155,7 +1582,7 @@
                                     <i class="fa-solid fa-check"></i>
                                 </div>
                                 <h2 class="text-4xl font-bold text-turquesa mb-2">¡Pago Realizado!</h2>
-                                <p class="text-gray-500 text-lg">Tu orden global ha sido registrada con éxito.</p>
+                                <p class="text-gray-500 text-lg">Los pedidos seleccionados fueron registrados con éxito.</p>
                             </div>
                             
                             <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border-4 border-turquesa/10 mb-8 relative">
@@ -1169,6 +1596,7 @@
 
                             <div class="space-y-4">
                                 ${lastNegativeChildId ? `<button onclick="navigateTo('recharge', {childId: ${lastNegativeChildId}})" class="w-full bg-naranja text-white font-bold py-4 rounded-2xl shadow-md hover:bg-orange-600 transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-wallet"></i> Cargar Saldo Ahora</button>` : ''}
+                                ${cart.length > 0 ? `<button onclick="navigateTo('cart')" class="w-full bg-lila text-white font-bold py-4 rounded-2xl shadow-md hover:bg-purple-600 transition-all flex items-center justify-center gap-2">Volver al carrito (Tienes pedidos en espera)</button>` : ''}
                                 <button onclick="navigateTo('pending')" class="w-full bg-turquesa text-white font-bold py-4 rounded-2xl shadow-md hover:bg-teal-900 transition-all">Ver compras pendientes de retiro</button>
                                 <button onclick="navigateTo('home')" class="w-full bg-white text-turquesa border border-turquesa font-bold py-4 rounded-2xl hover:bg-turquesa/5 transition-all">Volver al Inicio</button>
                             </div>
