@@ -948,11 +948,11 @@
 
                 case 'intro4':
                     app.innerHTML = `
-                        <div class="min-h-[85vh] flex flex-col items-center justify-center slide-anim">
-                            <div class="max-w-3xl w-full">
+                        <div class="min-h-[85vh] flex flex-row items-center justify-center slide-anim">
+                            <div class="w-full">
                                 <h2 class="text-4xl md:text-5xl font-urbanist font-bold text-lila mb-8 text-center">Presentación de marca</h2>
-                                
-                                <div class="bg-white p-8 md:p-10 rounded-[2rem] shadow-sm border border-gray-100 mb-10 relative overflow-hidden">
+                            <div style="display:flex; gap:2rem;">    
+                                <div class="bg-white p-8 md:p-10 rounded-[2rem] shadow-sm border border-gray-100 mb-10 relative overflow-hidden" style="flex:1;">
                                     <span style="font-size:2em;">Paleta de colores</span>
                                     <div style="display:flex;margin-top:1em;margin-bottom:1em">
                                         
@@ -987,10 +987,17 @@
                                         </div>                                        
                                     </div>
                                     <span style="font-size:2em;">Tipografía</span>
-                                    <p style="font-family:dunkin;font-size:6em;">Dunkin</p>
-                                    <p style="font-family:Montserrat;font-size:6em;">Montserrat</p>
+                                    <p style="font-family:dunkin;font-size:2em;">Dunkin</p>
+                                    <p style="font-family:Montserrat;font-size:2em;">Montserrat</p>
                                 </div>
-                                
+
+                                <div class="bg-white p-8 md:p-10 rounded-[2rem] shadow-sm border border-gray-100 mb-10 relative overflow-hidden" style="flex:1;">
+                                    <span style="font-size:2em;">Evolución de logo</span>
+                                    <div style="display:flex;margin-top:1em;margin-bottom:1em">
+                                        <img src="./bocetos.png">
+                                    </div>
+                                </div>
+                                </div>
                                 <div class="flex justify-center gap-4">
                                     <button onclick="navigateTo('intro2')" class="bg-gray-100 text-gray-600 font-bold py-4 px-8 rounded-2xl shadow-sm hover:bg-gray-200 transition-all text-lg flex items-center gap-2">
                                         <i class="fa-solid fa-arrow-left"></i> Atrás
@@ -1001,6 +1008,7 @@
                                 </div>
                             </div>
                         </div>
+                        
                     `;
                     break;
 
