@@ -186,14 +186,29 @@
         </div>
         
         <div class="hidden md:flex gap-6 items-center font-medium">
+            <!-- Nuevo botón Próximamente (Roadmap) -->
+            <button onclick="navigateTo('roadmap')" class="neu-btn px-4 py-1.5 rounded-full text-xs font-bold text-texto-oscuro hover:text-pizarra flex items-center gap-2 transition-all">
+                <i class="fa-solid fa-wand-magic-sparkles text-dorado"></i> Próximamente
+            </button>
             <button onclick="navigateTo('movements')" class="text-white/80 hover:text-white transition-colors">Movimientos</button>
             <button onclick="navigateTo('cart')" class="relative p-2 hover:bg-white/10 rounded-full transition-all">
                 <i class="fa-solid fa-cart-shopping text-xl text-gray-50"></i>
                 <span id="cart-count" class="absolute -top-1 -right-1 bg-dorado text-texto-oscuro font-bold text-[10px] w-5 h-5 flex items-center justify-center rounded-full shadow-md">0</span>
             </button>
+            <button class="relative p-2 hover:bg-white/10 rounded-full transition-all text-gray-50">
+                <i class="fa-regular fa-bell text-xl"></i>
+                <span class="absolute top-1 right-2 w-2.5 h-2.5 border-2 border-pizarra bg-dorado rounded-full"></span>
+            </button>
         </div>
 
         <div class="md:hidden flex items-center gap-4">
+            <button onclick="navigateTo('roadmap')" class="text-white/80 hover:text-dorado">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </button>
+            <button class="relative p-2 text-gray-50">
+                <i class="fa-regular fa-bell text-xl"></i>
+                <span class="absolute top-1 right-1 w-2.5 h-2.5 border-2 border-pizarra bg-dorado rounded-full"></span>
+            </button>
             <button onclick="navigateTo('cart')" class="relative p-2">
                 <i class="fa-solid fa-cart-shopping text-xl text-gray-50"></i>
                 <span id="cart-count-mobile" class="absolute top-0 right-0 bg-dorado text-texto-oscuro font-bold text-[10px] w-4 h-4 flex items-center justify-center rounded-full">0</span>
@@ -374,7 +389,6 @@
         function showNotification(message, isWarning = false) {
             const container = document.getElementById('notification-container');
             const notif = document.createElement('div');
-            // Alertas planas con colores semánticos pastel
             const bgColor = isWarning ? 'bg-melocoton' : 'bg-menta';
             const icon = isWarning ? 'fa-triangle-exclamation' : 'fa-circle-check';
             notif.className = `notification mt-4 ${bgColor} text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3 font-semibold z-50`;
@@ -934,6 +948,68 @@
                     `;
                     break;
 
+                case 'roadmap':
+                    app.innerHTML = `
+                        <div class="max-w-5xl mx-auto py-8 slide-anim">
+                            <div class="text-center mb-12">
+                                <h2 class="text-4xl font-black text-pizarra mb-4 tracking-tight">El futuro de <span class="text-dorado">RECRED</span></h2>
+                                <p class="text-texto-claro text-lg font-medium">Llevando la gestión escolar al próximo nivel con Inteligencia Artificial</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                                <!-- Card 1: IA Carga -->
+                                <div class="neu-convex rounded-3xl p-8 flex flex-col">
+                                    <div class="w-16 h-16 neu-concave text-pizarra rounded-full flex items-center justify-center text-3xl mb-6">
+                                        <i class="fa-solid fa-camera"></i>
+                                    </div>
+                                    <h3 class="text-2xl font-bold text-texto-oscuro mb-4">Carga Visual de Productos</h3>
+                                    <p class="text-texto-claro mb-8 leading-relaxed flex-grow">
+                                        Adiós a la carga manual. El kiosquero tomará una foto del producto y nuestra IA de <strong class="text-pizarra">Computer Vision</strong> extraerá el nombre, marca y valores nutricionales automáticamente. El usuario solo revisa, edita si es necesario, y aprueba.
+                                    </p>
+                                    <div class="neu-concave p-4 rounded-xl flex items-center justify-center gap-4">
+                                        <i class="fa-solid fa-camera text-texto-claro text-xl"></i>
+                                        <i class="fa-solid fa-arrow-right text-texto-claro text-xs"></i>
+                                        <i class="fa-solid fa-wand-magic-sparkles text-dorado text-xl"></i>
+                                        <i class="fa-solid fa-arrow-right text-texto-claro text-xs"></i>
+                                        <i class="fa-solid fa-check text-menta text-xl"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Card 2: Recomendaciones -->
+                                <div class="neu-convex rounded-3xl p-8 flex flex-col">
+                                    <div class="w-16 h-16 neu-concave text-dorado rounded-full flex items-center justify-center text-3xl mb-6">
+                                        <i class="fa-solid fa-brain"></i>
+                                    </div>
+                                    <h3 class="text-2xl font-bold text-texto-oscuro mb-4">Motor de Recomendaciones</h3>
+                                    <p class="text-texto-claro mb-6 leading-relaxed">
+                                        Un ecosistema inteligente con <strong class="text-dorado">Machine Learning</strong> para cada rol:
+                                    </p>
+                                    <div class="space-y-4 flex-grow">
+                                        <div class="neu-concave p-4 rounded-xl border border-transparent hover:border-pizarra/20 transition-all">
+                                            <h4 class="font-bold text-pizarra text-sm mb-1"><i class="fa-solid fa-store mr-1"></i> Para Kiosqueros</h4>
+                                            <p class="text-xs text-texto-oscuro font-medium">Análisis predictivo de ventas zonales para sugerir qué stock reponer y qué nuevos productos son tendencia.</p>
+                                        </div>
+                                        <div class="neu-concave p-4 rounded-xl border border-transparent hover:border-dorado/30 transition-all">
+                                            <h4 class="font-bold text-dorado text-sm mb-1"><i class="fa-regular fa-calendar-check mr-1"></i> Hábitos y Recordatorios</h4>
+                                            <p class="text-xs text-texto-oscuro font-medium"><i>"¡Es martes! No olvides la Coca y el Alfajor de siempre"</i>. Facilita la compra recurrente a los padres.</p>
+                                        </div>
+                                        <div class="neu-concave p-4 rounded-xl border border-transparent hover:border-menta/30 transition-all">
+                                            <h4 class="font-bold text-menta text-sm mb-1"><i class="fa-solid fa-apple-whole mr-1"></i> Salud Proactiva</h4>
+                                            <p class="text-xs text-texto-oscuro font-medium">Alerta de patrones de consumo altos en azúcar y sugiere alternativas saludables del menú escolar.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button onclick="navigateTo('home')" class="neu-btn text-texto-oscuro font-bold py-4 px-12 rounded-2xl flex items-center justify-center gap-2 mx-auto">
+                                    <i class="fa-solid fa-arrow-left"></i> Volver a la Plataforma
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    break;
+
                 case 'home':
                     const groupedChildren = children.reduce((acc, child) => {
                         if (!acc[child.school]) acc[child.school] = [];
@@ -1009,7 +1085,7 @@
                             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
                                 <div>
                                     <h2 class="text-3xl font-bold text-pizarra">${pageTitle}</h2>
-                                    ${viewChild ? `<p class="text-texto-claro mt-2 flex items-center gap-3"><img src="${viewChild.img}" class="w-8 h-8 rounded-full object-cover shadow-sm border border-white/50"> <span class="font-medium">Registros de <strong class="text-texto-oscuro">${viewChild.name}</strong></span></p>` : `<p class="text-texto-claro mt-2 font-medium">Registros de todos tus hijos</p>`}
+                                    ${viewChild ? `<p class="text-texto-claro mt-2 flex items-center gap-3"><img src="${viewChild.img}" class="w-6 h-6 rounded-full object-cover shadow-sm border border-white/50"> <span class="font-medium">Registros de <strong class="text-texto-oscuro">${viewChild.name}</strong></span></p>` : `<p class="text-texto-claro mt-2 font-medium">Registros de todos tus hijos</p>`}
                                 </div>
                             </div>
 
@@ -1315,8 +1391,9 @@
                     }, {});
 
                     const todayStr = getTodayString();
+                    const nextValidDate = getNextValidDateStr();
+
                     const cartWarnings = getBalanceWarnings();
-                    
                     const cartWarningsHTML = cartWarnings.length > 0 ? `
                         <div class="neu-concave p-6 rounded-3xl mb-8 border border-melocoton/30">
                             <h4 class="font-bold text-melocoton flex items-center gap-2 mb-3"><i class="fa-solid fa-triangle-exclamation"></i> Atención: Saldo en negativo</h4>
