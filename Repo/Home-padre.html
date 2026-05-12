@@ -122,6 +122,12 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             cursor: pointer;
         }
+        @font-face {
+            font-family: 'Fredoka';
+            src: url('./Fredoka/Fredoka-VariableFont_wdth\,wght.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
     </style>
 </head>
 <body class="min-h-screen relative">
@@ -897,7 +903,7 @@
                                 <div class="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-turquesa via-lila to-naranja"></div>
                                 <img src="./logo.png" alt="Logo Recred" class="w-48 h-48 object-contain mb-6 drop-shadow-sm" onerror="this.src='https://ui-avatars.com/api/?name=Re+Cred&background=FFC107&color=0D6B78&size=200&font-size=0.4'">
                                 <h1 class="text-6xl md:text-7xl font-urbanist font-bold text-turquesa tracking-tight mb-3">RECRED</h1>
-                                <p class="text-gray-500 mb-10 text-xl font-medium tracking-wide">Gestión inteligente de cantinas escolares</p>
+                                <p class="text-gray-500 mb-10 text-xl font-medium tracking-wide">Gestión inteligente <br/>de cantinas escolares</p>
                                 <button onclick="navigateTo('intro2')" class="w-full bg-naranja text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-orange-600 transition-all text-xl flex items-center justify-center gap-3">
                                     Continuar <i class="fa-solid fa-arrow-right"></i>
                                 </button>
@@ -952,8 +958,8 @@
                                     <button onclick="navigateTo('intro2')" class="bg-gray-100 text-gray-600 font-bold py-4 px-8 rounded-2xl shadow-sm hover:bg-gray-200 transition-all text-lg flex items-center gap-2">
                                         <i class="fa-solid fa-arrow-left"></i> Atrás
                                     </button>
-                                    <button onclick="navigateTo('home')" class="bg-turquesa text-white font-bold py-4 px-12 rounded-2xl shadow-lg hover:bg-teal-900 transition-all text-lg flex items-center gap-3">
-                                        Ingresar a la Plataforma <i class="fa-solid fa-rocket"></i>
+                                    <button onclick="navigateTo('intro4')" class="bg-naranja text-white font-bold py-4 px-12 rounded-2xl shadow-lg hover:bg-orange-600 transition-all text-lg flex items-center gap-2">
+                                        Continuar <i class="fa-solid fa-arrow-right"></i>
                                     </button>
                                 </div>
                             </div>
@@ -961,6 +967,56 @@
                     `;
                     break;
 
+                case 'intro4':
+                    app.innerHTML = `
+                        <div class="min-h-[85vh] flex flex-col items-center justify-center slide-anim">
+                            <div class="max-w-3xl w-full">
+                                <h2 class="text-4xl md:text-5xl font-urbanist font-bold text-lila mb-8 text-center">Presentación de marca</h2>
+                                
+                                <div class="bg-white p-8 md:p-10 rounded-[2rem] shadow-sm border border-gray-100 mb-10 relative overflow-hidden">
+                                    <span style="font-size:2em;">Paleta de colores</span>
+                                    <div style="display:flex;margin-top:1em;margin-bottom:1em">
+                                        
+                                        <div class="flex items-center justify-center h-24 w-24 rounded-full" style="background-color:#0D6B78;">
+                                            <span class="text-white font-bold">
+                                                #0D6B78
+                                            </span>
+                                        </div>
+
+                                        <div class="flex items-center justify-center h-24 w-24 rounded-full" style="background-color:#FF6B3D;">
+                                            <span class="text-white font-bold">
+                                                #FF6B3D
+                                            </span>                                            
+                                        </div>
+
+                                        <div class="flex items-center justify-center h-24 w-24 rounded-full" style="background-color:#A78BFA;">
+                                            <span class="text-white font-bold">
+                                                #A78BFA
+                                            </span>                                            
+                                        </div>
+
+                                        <div class="flex items-center justify-center h-24 w-24 rounded-full" style="background-color:#FFC107;">
+                                            <span class="text-white font-bold">
+                                                #FFC107
+                                            </span>                                            
+                                        </div>
+                                    </div>
+                                    <span style="font-size:2em;">Tipografía</span>
+                                    <p style="font-family:fredoka;font-size:6em;">FREDOKA</p>
+                                </div>
+                                
+                                <div class="flex justify-center gap-4">
+                                    <button onclick="navigateTo('intro2')" class="bg-gray-100 text-gray-600 font-bold py-4 px-8 rounded-2xl shadow-sm hover:bg-gray-200 transition-all text-lg flex items-center gap-2">
+                                        <i class="fa-solid fa-arrow-left"></i> Atrás
+                                    </button>
+                                    <button onclick="navigateTo('home')" class="bg-turquesa text-white font-bold py-4 px-12 rounded-2xl shadow-lg hover:bg-teal-900 transition-all text-lg flex items-center gap-3">
+                                        Ingresar a la Plataforma <i class="fa-solid fa-rocket"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;                    
                 case 'home':
                     const groupedChildren = children.reduce((acc, child) => {
                         if (!acc[child.school]) acc[child.school] = [];
