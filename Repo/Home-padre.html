@@ -1468,7 +1468,7 @@
 
                 case 'recharge':
                     const rechargeChild = children.find(c => c.id === currentChildId);
-
+                    
                     app.innerHTML = `
                         <div class="max-w-2xl mx-auto py-12">
                             <div class="neu-convex p-12 text-center">
@@ -1477,19 +1477,17 @@
                                 </div>
                                 
                                 <h2 class="text-3xl font-bold text-texto-oscuro mb-2">Acreditación de Saldo</h2>
-                                <p class="text-texto-claro font-medium mb-10">Alumno seleccionado: <strong class="text-pizarra">${rechargeChild.name}</strong></p>
+                                <p class="text-texto-claro font-medium mb-10 text-lg">Alumno seleccionado: <strong class="text-pizarra">${rechargeChild.name}</strong></p>
                                 
                                 <div class="neu-concave p-8 mb-10 text-left">
-                                    <h3 class="font-bold text-pizarra mb-4 flex items-center gap-3"><i class="fa-solid fa-plug-circle-bolt text-dorado text-xl"></i> Integración con Mercado Pago API</h3>
-                                    <p class="text-texto-oscuro text-sm leading-relaxed mb-4">
-                                        En la versión de producción de Recred, esta sección implementará el <strong>Checkout Pro de Mercado Pago</strong>. 
-                                    </p>
-                                    <p class="text-texto-oscuro text-sm leading-relaxed">
-                                        Esto permitirá a los padres realizar pagos con tarjetas de crédito, débito o dinero en cuenta bajo los más altos estándares de seguridad. Una vez que la pasarela confirme la transacción mediante webhooks, el sistema actualizará de forma instantánea y automática el saldo en la cuenta del alumno, permitiéndole operar en la cantina sin demoras ni validaciones manuales por parte del colegio.
+                                    <h3 class="font-bold text-pizarra mb-6 flex items-center gap-3 text-xl"><i class="fa-solid fa-plug-circle-bolt text-dorado text-2xl"></i> Integración con Mercado Pago API</h3>
+                                    
+                                    <p class="text-texto-oscuro text-lg leading-relaxed mb-5 font-medium">
+                                        Esta sección implementará el <strong>Checkout Pro de Mercado Pago</strong> para garantizar la máxima seguridad transaccional.
                                     </p>
                                 </div>
                                 
-                                <button onclick="navigateTo('home')" class="w-full sm:w-auto px-12 neu-btn text-pizarra font-bold py-4 rounded-xl flex items-center justify-center gap-3 mx-auto">
+                                <button onclick="navigateTo('home')" class="w-full sm:w-auto px-12 neu-btn text-pizarra font-bold py-4 rounded-xl flex items-center justify-center gap-3 mx-auto text-lg">
                                     <i class="fa-solid fa-arrow-left"></i> Volver a Home
                                 </button>
                             </div>
