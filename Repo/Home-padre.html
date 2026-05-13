@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,39 +24,46 @@
         }
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+
     <style>
         :root {
             /* Variables para las sombras neumórficas calculadas sobre el #F0F4F8 */
             --shadow-light: #ffffff;
-            --shadow-dark: #cdd5df; 
+            --shadow-dark: #cdd5df;
             --dorado: #F2B705;
             --pizarra: #4A6FA5;
         }
-        
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #F0F4F8; 
-            color: #334155; 
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F0F4F8;
+            color: #334155;
         }
-        h1, h2, h3, .font-urbanist { font-family: 'Urbanist', sans-serif; }
+
+        h1,
+        h2,
+        h3,
+        .font-urbanist {
+            font-family: 'Montserrat', sans-serif;
+        }
 
         /* --- CLASES NEUMÓRFICAS --- */
-        
+
         .neu-convex {
             background-color: #F0F4F8;
             box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
             border: none;
             border-radius: 1.5rem;
         }
-        
+
         .neu-concave {
             background-color: #F0F4F8;
             box-shadow: inset 6px 6px 12px var(--shadow-dark), inset -6px -6px 12px var(--shadow-light);
             border: none;
             border-radius: 1rem;
         }
-        
+
         .neu-btn {
             background-color: #F0F4F8;
             box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
@@ -63,20 +71,23 @@
             border: none;
             cursor: pointer;
         }
+
         .neu-btn:hover {
             box-shadow: 7px 7px 14px var(--shadow-dark), -7px -7px 14px var(--shadow-light);
         }
+
         .neu-btn:active {
             box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
         }
 
         .btn-dorado {
             background-color: var(--dorado);
-            color: #1F2937; 
+            color: #1F2937;
             box-shadow: 4px 4px 10px rgba(242, 183, 5, 0.3), -4px -4px 10px rgba(255, 255, 255, 0.8);
             transition: all 0.2s ease;
             border: none;
         }
+
         .btn-dorado:active {
             box-shadow: inset 2px 2px 5px rgba(180, 130, 0, 0.4), inset -2px -2px 5px rgba(255, 255, 255, 0.5);
             transform: scale(0.98);
@@ -85,11 +96,24 @@
         .notification {
             animation: slideIn 0.5s ease-out forwards;
         }
+
         @keyframes slideIn {
-            from { transform: translate(-50%, -100%); opacity: 0; }
-            to { transform: translate(-50%, 20px); opacity: 1; }
+            from {
+                transform: translate(-50%, -100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translate(-50%, 20px);
+                opacity: 1;
+            }
         }
-        .item-disabled { filter: grayscale(1); opacity: 0.5; pointer-events: none; }
+
+        .item-disabled {
+            filter: grayscale(1);
+            opacity: 0.5;
+            pointer-events: none;
+        }
 
         .status-badge {
             padding: 4px 12px;
@@ -98,15 +122,33 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            box-shadow: inset 2px 2px 4px rgba(0,0,0,0.1);
+            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.1);
         }
-        .status-pendiente { background-color: var(--dorado); color: #1F2937; } 
-        .status-retirada { background-color: #E2E8F0; color: #81B29A; } /* Mentolado */
+
+        .status-pendiente {
+            background-color: var(--dorado);
+            color: #1F2937;
+        }
+
+        .status-retirada {
+            background-color: #E2E8F0;
+            color: #81B29A;
+        }
+
+        /* Mentolado */
 
         @keyframes fadeInSlide {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
+
         .slide-anim {
             animation: fadeInSlide 0.6s ease-out forwards;
         }
@@ -117,6 +159,7 @@
             width: 100%;
             height: 30px;
         }
+
         .slider-track-bg {
             position: absolute;
             width: 100%;
@@ -127,6 +170,7 @@
             top: 50%;
             transform: translateY(-50%);
         }
+
         .slider-track-fill {
             position: absolute;
             height: 8px;
@@ -136,6 +180,7 @@
             transform: translateY(-50%);
             z-index: 1;
         }
+
         .slider-input {
             position: absolute;
             width: 100%;
@@ -147,6 +192,7 @@
             appearance: none;
             z-index: 2;
         }
+
         .slider-input::-webkit-slider-thumb {
             height: 24px;
             width: 24px;
@@ -157,6 +203,7 @@
             box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light);
             cursor: pointer;
         }
+
         .slider-input::-moz-range-thumb {
             height: 24px;
             width: 24px;
@@ -168,57 +215,64 @@
         }
     </style>
 </head>
+
 <body class="min-h-screen relative pb-12">
 
     <!-- Notificación Flotante -->
     <div id="notification-container" class="fixed top-0 left-1/2 -translate-x-1/2 z-50 pointer-events-none"></div>
 
     <!-- Barra de Navegación -->
-    <nav id="main-nav" class="bg-pizarra text-white sticky top-0 z-40 shadow-xl h-16 flex items-center px-4 md:px-8 justify-between transition-opacity duration-300 mb-8">
+    <nav id="main-nav"
+        class="bg-pizarra text-white sticky top-0 z-40 shadow-xl h-16 flex items-center px-4 md:px-8 justify-between transition-opacity duration-300 mb-8">
         <div class="flex items-center gap-4">
-            <div onclick="navigateTo('home')" class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
-                <img src="./logo.png" alt="Logo Recred" class="h-10 w-auto object-contain" onerror="this.src='https://ui-avatars.com/api/?name=RC&background=F2B705&color=4A6FA5&rounded=true'">
+            <div onclick="navigateTo('home')"
+                class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
+                <img src="./logo.png" alt="Logo Recred" class="h-10 w-auto object-contain"
+                    onerror="this.src='https://ui-avatars.com/api/?name=RC&background=F2B705&color=4A6FA5&rounded=true'">
                 <span class="font-urbanist font-bold text-2xl tracking-tight text-dorado hidden sm:inline">RECRED</span>
             </div>
             <div class="hidden md:flex items-center border-l border-white/20 pl-4 ml-2">
                 <span id="user-greeting" class="text-sm font-medium text-gray-100">Hola, Martín</span>
             </div>
         </div>
-        
+
         <div class="hidden md:flex gap-6 items-center font-medium">
-            <button onclick="navigateTo('movements')" class="text-white/80 hover:text-white transition-colors">Movimientos</button>
+            <button onclick="navigateTo('movements')"
+                class="text-white/80 hover:text-white transition-colors">Movimientos</button>
             <button onclick="navigateTo('cart')" class="relative p-2 hover:bg-white/10 rounded-full transition-all">
                 <i class="fa-solid fa-cart-shopping text-xl text-gray-50"></i>
-                <span id="cart-count" class="absolute -top-1 -right-1 bg-dorado text-texto-oscuro font-bold text-[10px] w-5 h-5 flex items-center justify-center rounded-full shadow-md">0</span>
+                <span id="cart-count"
+                    class="absolute -top-1 -right-1 bg-dorado text-texto-oscuro font-bold text-[10px] w-5 h-5 flex items-center justify-center rounded-full shadow-md">0</span>
             </button>
         </div>
 
         <div class="md:hidden flex items-center gap-4">
             <button onclick="navigateTo('cart')" class="relative p-2">
                 <i class="fa-solid fa-cart-shopping text-xl text-gray-50"></i>
-                <span id="cart-count-mobile" class="absolute top-0 right-0 bg-dorado text-texto-oscuro font-bold text-[10px] w-4 h-4 flex items-center justify-center rounded-full">0</span>
+                <span id="cart-count-mobile"
+                    class="absolute top-0 right-0 bg-dorado text-texto-oscuro font-bold text-[10px] w-4 h-4 flex items-center justify-center rounded-full">0</span>
             </button>
         </div>
     </nav>
 
     <!-- Contenedor Principal -->
-    <main id="app" class="max-w-7xl mx-auto p-4 md:px-8"></main>
+    <main id="app" class="max-w-[150rem] mx-auto p-4 md:px-8"></main>
 
     <script>
         // --- ESTADO DE LA APLICACIÓN ---
-        const loggedUserName = "Martín"; 
+        const loggedUserName = "Martín";
         let currentView = 'intro1';
         let currentChildId = null;
-        let cart = []; 
-        let pendingMenuQuantities = {}; 
-        let showChildModal = false; 
-        
-        let cartCheckoutData = {}; 
+        let cart = [];
+        let pendingMenuQuantities = {};
+        let showChildModal = false;
+
+        let cartCheckoutData = {};
         let lastCheckoutCodes = [];
-        let lastNegativeChildId = null; 
+        let lastNegativeChildId = null;
 
         let selectedPurchaseId = null;
-        
+
         let currentMinPrice = 0;
         let currentMaxPrice = 1000;
 
@@ -231,15 +285,15 @@
         };
 
         let restrictions = {
-            1: { noTacc: false, noSugar: false, noPeanuts: false, vegan: false, allowedBreaks: { '1er': true, '2do': true, 'mediodia': true, 'fuera': true } }, 
-            2: { noTacc: false, noSugar: false, noPeanuts: false, vegan: false, allowedBreaks: { '1er': true, '2do': true, 'mediodia': true, 'fuera': true } }, 
-            3: { noTacc: false, noSugar: false, noPeanuts: false, vegan: false, allowedBreaks: { '1er': true, '2do': true, 'mediodia': true, 'fuera': true } }  
+            1: { noTacc: false, noSugar: false, noPeanuts: false, vegan: false, allowedBreaks: { '1er': true, '2do': true, 'mediodia': true, 'fuera': true } },
+            2: { noTacc: false, noSugar: false, noPeanuts: false, vegan: false, allowedBreaks: { '1er': true, '2do': true, 'mediodia': true, 'fuera': true } },
+            3: { noTacc: false, noSugar: false, noPeanuts: false, vegan: false, allowedBreaks: { '1er': true, '2do': true, 'mediodia': true, 'fuera': true } }
         };
 
         let specificItemRestrictions = { 1: [], 2: [], 3: [] };
-        
+
         const feriados = [
-            '2026-05-01', '2026-05-25', '2026-06-20', '2026-07-09', 
+            '2026-05-01', '2026-05-25', '2026-06-20', '2026-07-09',
             '2026-09-21', '2026-10-12', '2026-11-20'
         ];
 
@@ -280,7 +334,7 @@
             {
                 id: 10002,
                 childId: 2,
-                date: '2026-05-15', 
+                date: '2026-05-15',
                 breakTime: '2do Recreo',
                 total: 850,
                 status: 'Pendiente',
@@ -314,8 +368,8 @@
         function getNextValidDateStr(startDateStr = null) {
             let date = startDateStr ? new Date(startDateStr + 'T00:00:00') : new Date();
             const today = new Date();
-            today.setHours(0,0,0,0);
-            if(date < today) date = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (date < today) date = new Date();
             while (true) {
                 const year = date.getFullYear();
                 const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -380,14 +434,14 @@
             notif.className = `notification mt-4 ${bgColor} text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3 font-semibold z-50`;
             notif.innerHTML = `<i class="fa-solid ${icon}"></i> ${message}`;
             container.appendChild(notif);
-            setTimeout(() => notif.remove(), 4000); 
+            setTimeout(() => notif.remove(), 4000);
         }
 
         function navigateTo(view, params = null) {
             currentView = view;
             if (params && params.childId) {
                 currentChildId = params.childId;
-                pendingMenuQuantities = {}; 
+                pendingMenuQuantities = {};
             }
             if (view === 'movements' && (!params || !params.childId)) {
                 currentChildId = null;
@@ -409,7 +463,7 @@
                 initializeCartData();
             }
             render();
-            window.scrollTo(0,0);
+            window.scrollTo(0, 0);
         }
 
         function initializeCartData() {
@@ -425,16 +479,16 @@
         }
 
         function toggleCartChild(childId) {
-            if(cartCheckoutData[childId]) {
+            if (cartCheckoutData[childId]) {
                 cartCheckoutData[childId].selected = !cartCheckoutData[childId].selected;
                 render();
             }
         }
 
         function updateCartChildData(childId, field, value) {
-            if(cartCheckoutData[childId]) {
+            if (cartCheckoutData[childId]) {
                 cartCheckoutData[childId][field] = value;
-                if(field === 'date') render();
+                if (field === 'date') render();
             }
         }
 
@@ -447,13 +501,13 @@
             const searchInput = document.getElementById('filter-search');
             const catSelect = document.getElementById('filter-category');
             const traitSelect = document.getElementById('filter-trait');
-            if(searchInput) searchInput.value = '';
-            if(catSelect) catSelect.value = 'all';
-            if(traitSelect) traitSelect.value = 'all';
-            
+            if (searchInput) searchInput.value = '';
+            if (catSelect) catSelect.value = 'all';
+            if (traitSelect) traitSelect.value = 'all';
+
             const sMin = document.getElementById('slider-min');
             const sMax = document.getElementById('slider-max');
-            if(sMin && sMax) {
+            if (sMin && sMax) {
                 sMin.value = currentMinPrice;
                 sMax.value = currentMaxPrice;
                 updateSliderVisuals();
@@ -473,12 +527,12 @@
             let sMax = document.getElementById('slider-max');
             let valMin = parseInt(sMin.value);
             let valMax = parseInt(sMax.value);
-            
+
             if (valMin >= valMax) {
                 if (type === 'min') sMin.value = valMax - 100;
                 if (type === 'max') sMax.value = valMin + 100;
             }
-            
+
             updateSliderVisuals();
             canteenFilters.minSelected = parseInt(sMin.value);
             canteenFilters.maxSelected = parseInt(sMax.value);
@@ -491,19 +545,19 @@
             let trackFill = document.getElementById('slider-track-fill');
             let displayMin = document.getElementById('display-min');
             let displayMax = document.getElementById('display-max');
-            
-            if(!sMin || !sMax) return;
+
+            if (!sMin || !sMax) return;
 
             let valMin = parseInt(sMin.value);
             let valMax = parseInt(sMax.value);
-            
+
             displayMin.innerText = valMin;
             displayMax.innerText = valMax;
 
             let percentMin = ((valMin - sMin.min) / (sMin.max - sMin.min)) * 100;
             let percentMax = ((valMax - sMax.min) / (sMax.max - sMax.min)) * 100;
-            
-            if(trackFill) {
+
+            if (trackFill) {
                 trackFill.style.left = percentMin + "%";
                 trackFill.style.width = (percentMax - percentMin) + "%";
             }
@@ -517,7 +571,7 @@
         function toggleItemRestriction(productId) {
             const blockedArray = specificItemRestrictions[currentChildId];
             const index = blockedArray.indexOf(productId);
-            
+
             if (index > -1) {
                 blockedArray.splice(index, 1);
                 showNotification("Restricción individual eliminada.");
@@ -529,7 +583,7 @@
                     delete pendingMenuQuantities[productId];
                 }
             }
-            renderCanteenGrid(); 
+            renderCanteenGrid();
         }
 
         function renderCanteenGrid() {
@@ -567,7 +621,7 @@
             gridContainer.innerHTML = schoolProducts.map(p => {
                 let blockReason = "";
                 const isSpecificallyBlocked = specificItemRestrictions[currentChildId].includes(p.id);
-                
+
                 if (isSpecificallyBlocked) blockReason = "Restringido manualmente";
                 else if (activeRestr.noTacc && p.hasTacc) blockReason = "Contiene TACC";
                 else if (activeRestr.noSugar && p.hasSugar) blockReason = "Contiene Azúcar";
@@ -595,11 +649,11 @@
                             <h3 class="text-base font-bold text-texto-oscuro mb-1 leading-tight flex-grow line-clamp-2">${p.name}</h3>
                             <p class="text-pizarra font-black text-xl mb-4">$${p.price.toLocaleString('es-AR')}</p>
                             
-                            ${isDisabled ? 
-                                `<button class="w-full neu-concave text-melocoton font-bold py-3 text-xs mt-auto flex items-center justify-center gap-2">
+                            ${isDisabled ?
+                        `<button class="w-full neu-concave text-melocoton font-bold py-3 text-xs mt-auto flex items-center justify-center gap-2">
                                     <i class="fa-solid fa-ban"></i> ${blockReason}
-                                </button>` : 
-                                `
+                                </button>` :
+                        `
                                 <div class="mt-auto">
                                     <div class="flex items-center justify-between gap-2 mb-4 neu-concave p-1.5">
                                         <button onclick="changeMenuQuantity(${p.id}, -1)" class="neu-btn w-9 h-9 rounded-lg text-pizarra flex items-center justify-center"><i class="fa-solid fa-minus text-xs"></i></button>
@@ -607,13 +661,13 @@
                                         <button onclick="changeMenuQuantity(${p.id}, 1)" class="neu-btn w-9 h-9 rounded-lg text-pizarra flex items-center justify-center"><i class="fa-solid fa-plus text-xs"></i></button>
                                     </div>
                                     
-                                    ${isAdded ? 
-                                        `<button disabled class="w-full neu-concave text-menta font-bold py-3 rounded-xl flex items-center justify-center gap-2 text-sm"><i class="fa-solid fa-check"></i> En el carrito</button>` :
-                                        `<button onclick="addToCart(${p.id})" class="w-full btn-dorado font-bold py-3 rounded-xl flex items-center justify-center gap-2 text-sm"><i class="fa-solid fa-cart-plus"></i> Agregar</button>`
-                                    }
+                                    ${isAdded ?
+                            `<button disabled class="w-full neu-concave text-menta font-bold py-3 rounded-xl flex items-center justify-center gap-2 text-sm"><i class="fa-solid fa-check"></i> En el carrito</button>` :
+                            `<button onclick="addToCart(${p.id})" class="w-full btn-dorado font-bold py-3 rounded-xl flex items-center justify-center gap-2 text-sm"><i class="fa-solid fa-cart-plus"></i> Agregar</button>`
+                        }
                                 </div>
                                 `
-                            }
+                    }
                         </div>
                     </div>
                 `;
@@ -657,13 +711,13 @@
             const product = allProducts.find(p => p.id === productId);
             const inCart = cart.find(item => item.id === productId && item.childId === currentChildId);
             const qtyToAdd = pendingMenuQuantities[productId] || 1;
-            
+
             if (inCart) {
-                inCart.quantity = qtyToAdd; 
+                inCart.quantity = qtyToAdd;
             } else {
                 cart.push({ ...product, quantity: qtyToAdd, childId: currentChildId });
             }
-            
+
             updateCartUI();
             showNotification(`Se agregaron ${qtyToAdd}x "${product.name}" al carrito`);
             renderCanteenGrid();
@@ -678,7 +732,7 @@
                     return;
                 }
             }
-            if(currentView === 'canteen') renderCanteenGrid();
+            if (currentView === 'canteen') renderCanteenGrid();
             else render();
             updateCartUI();
         }
@@ -687,7 +741,7 @@
             cart = cart.filter(item => !(item.id === productId && item.childId === childId));
             const remainingItemsForChild = cart.some(item => item.childId === childId);
             if (!remainingItemsForChild && cartCheckoutData[childId]) delete cartCheckoutData[childId];
-            if(currentView === 'canteen') renderCanteenGrid();
+            if (currentView === 'canteen') renderCanteenGrid();
             else render();
             updateCartUI();
         }
@@ -729,7 +783,7 @@
                 const childTotal = spentPerChild[childId];
                 const childData = cartCheckoutData[childId];
                 const code = generateWithdrawalCode().toUpperCase();
-                
+
                 if (child) {
                     child.balance -= childTotal;
                     if (child.balance < 0 && !lastNegativeChildId) {
@@ -761,7 +815,7 @@
         function render() {
             const app = document.getElementById('app');
             const mainNav = document.getElementById('main-nav');
-            
+
             if (['intro1', 'intro2', 'intro3'].includes(currentView)) {
                 mainNav.style.display = 'none';
             } else {
@@ -800,7 +854,7 @@
                 const p = purchases.find(pur => pur.id === selectedPurchaseId);
                 const child = children.find(c => c.id === p.childId);
                 const statusClass = p.status === 'Pendiente' ? 'status-pendiente' : 'status-retirada';
-                
+
                 modalDetailsHTML = `
                     <div class="fixed inset-0 bg-gray-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
                         <div class="neu-convex p-8 w-full max-w-md relative flex flex-col max-h-[90vh]">
@@ -864,49 +918,69 @@
                     </div>
                 `;
             }
-            
+
             switch (currentView) {
                 case 'intro1':
                     app.innerHTML = `
-                        <div class="fixed inset-0 flex flex-col items-center justify-center text-center slide-anim z-50 p-4" style="background-color: var(--fondo);">
-                            <div class="neu-convex p-12 md:p-16 flex flex-col items-center max-w-lg w-full">
-                                <div class="neu-concave p-6 rounded-full mb-8">
-                                    <img src="./logo.png" alt="Logo Recred" class="w-40 h-40 object-contain" onerror="this.src='https://ui-avatars.com/api/?name=Re+Cred&background=F2B705&color=4A6FA5&size=200&font-size=0.4'">
-                                </div>
-                                <h1 class="text-6xl md:text-7xl font-urbanist font-bold text-pizarra tracking-tight mb-4">RECRED</h1>
-                                <p class="text-texto-claro mb-12 text-xl font-medium tracking-wide">Gestión inteligente de cantinas escolares</p>
-                                <button onclick="navigateTo('intro2')" class="w-full btn-dorado font-bold py-4 rounded-2xl text-xl flex items-center justify-center gap-3">
-                                    Continuar <i class="fa-solid fa-arrow-right"></i>
-                                </button>
-                            </div>
-                        </div>
-                    `;
+        <div class="fixed inset-0 flex flex-col items-center justify-center text-center slide-anim z-50 p-4" style="background-color: var(--fondo);">
+            <div class="neu-convex p-12 md:p-16 flex flex-col items-center max-w-lg w-full">
+                <!-- Contenedor de imagen con ancho fijo para referencia -->
+                <div class="mb-6 w-full flex justify-center">
+                    <img src="./logo.png" alt="Logo Recred" class="max-w-xs w-full object-contain" onerror="this.src='https://ui-avatars.com/api/?name=Re+Cred&background=F2B705&color=4A6FA5&size=200&font-size=0.4'">
+                </div>
+                
+                <div class="max-w-xs w-full mb-8"> 
+                    <p class="text-texto-claro text-xl font-medium tracking-wide uppercase font-urbanist" 
+                       style="text-align: justify;">
+                       <strong> Gestor inteligente <br> de kioscos escolares</strong>
+                    </p>
+                </div>
+
+                <button onclick="navigateTo('intro2')" class="w-full btn-dorado font-bold py-4 rounded-2xl text-xl flex items-center justify-center gap-3">
+                    Continuar <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    `;
                     break;
 
                 case 'intro2':
                     app.innerHTML = `
-                        <div class="min-h-[85vh] flex flex-col items-center justify-center slide-anim">
-                            <div class="max-w-3xl w-full">
-                                <div class="text-pizarra text-5xl mb-6 text-center"><i class="fa-solid fa-bullseye"></i></div>
-                                <h2 class="text-4xl md:text-5xl font-urbanist font-bold text-pizarra mb-10 text-center">Nuestra Visión</h2>
-                                <div class="neu-convex p-8 md:p-12 mb-10">
-                                    <p class="text-texto-oscuro text-lg leading-relaxed font-medium">
-                                        [PARTE 1 DE LA MARCA: Reemplaza este texto. Aquí puedes explicar la problemática actual en las cantinas escolares (filas largas, manejo de efectivo por niños, desconocimiento de los padres sobre qué comen sus hijos) y cómo Recred nace para digitalizar y asegurar este proceso.]
-                                    </p>
-                                </div>
-                                <div class="flex justify-center gap-6">
-                                    <button onclick="navigateTo('intro1')" class="neu-btn text-texto-claro font-bold py-4 px-8 rounded-2xl text-lg flex items-center gap-2">
-                                        <i class="fa-solid fa-arrow-left"></i> Atrás
-                                    </button>
-                                    <button onclick="navigateTo('intro3')" class="btn-dorado font-bold py-4 px-12 rounded-2xl text-lg flex items-center gap-2">
+        <div class="min-h-[85vh] flex flex-row items-center justify-center slide-anim ">
+            <div class="max-w-4xl w-full px-4" >
+                <h2 class="text-4xl md:text-5xl font-urbanist font-bold text-turquesa mb-8 text-center">Problemática</h2>
+                
+                <div class="bg-white p-8 md:p-10 rounded-[2rem] shadow-sm border border-gray-100 mb-10 font-urbanist">
+                    <ul class="text-gray-600 text-lg leading-relaxed space-y-3 text-left" style="font-size: 1.5rem;">
+                        <li><strong>Padre:</strong> Sin control ni visibilidad sobre hábitos y gastos</li>
+                        <li><strong>Comerciante:</strong> Administración ineficiente, sobreventas, desperdicio y pérdidas económicas</li>
+                        <li><strong>Estudiante:</strong> Filas largas y riesgo con efectivo</li>
+                    </ul>
+                </div>              
+            </div>
+            <div class="max-w-4xl w-full px-4" style="font-size: 1.5rem;" >
+                <h2 class="text-4xl md:text-5xl font-urbanist font-bold text-turquesa mb-8 text-center">Solución</h2>
+                
+             <div class="bg-white p-8 md:p-10 rounded-[2rem] shadow-sm border border-gray-100 mb-10 font-urbanist">
+                    <ul class="text-gray-600 text-lg leading-relaxed space-y-3 text-left" style="font-size: 1.5rem;">
+                        <li><strong>Padre:</strong> Distribución del dinero y aplicación de preferencias </li>
+                        <li><strong>Comerciante:</strong> Carga y sugerencia inteligente para optimizar stock</li>
+                        <li><strong>Estudiante:</strong> Retiros ágiles con QR o palabra clave </li>
+                    </ul>
+                </div>               
+            </div>
+               
+        </div>
+         <div class="flex justify-center gap-4">
+                    <button onclick="navigateTo('intro1')" class="bg-gray-100 text-gray-600 font-bold py-4 px-8 rounded-2xl shadow-sm hover:bg-gray-200 transition-all text-lg flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-left"></i> Atrás
+                    </button>
+                     <button onclick="navigateTo('intro3')" class="btn-dorado font-bold py-4 px-12 rounded-2xl text-lg flex items-center gap-2">
                                         Continuar <i class="fa-solid fa-arrow-right"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                    </button>
+                </div>
+    `;
                     break;
-
                 case 'intro3':
                     app.innerHTML = `
                         <div class="min-h-[85vh] flex flex-col items-center justify-center slide-anim">
@@ -1022,10 +1096,10 @@
                                         <p class="text-texto-oscuro text-xl font-medium">No se encontraron registros ${isPendingView ? 'pendientes' : ''}.</p>
                                     </div>
                                 ` : filteredPurchases.map(p => {
-                                    const pChild = children.find(c => c.id === p.childId);
-                                    const statusClass = p.status === 'Pendiente' ? 'status-pendiente' : 'status-retirada';
-                                    
-                                    return `
+                        const pChild = children.find(c => c.id === p.childId);
+                        const statusClass = p.status === 'Pendiente' ? 'status-pendiente' : 'status-retirada';
+
+                        return `
                                     <div class="neu-convex p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
                                         
                                         <div class="flex items-center gap-5 md:w-1/3">
@@ -1062,7 +1136,7 @@
                                         </div>
                                     </div>
                                     `;
-                                }).join('')}
+                    }).join('')}
                             </div>
                         </div>
                     `;
@@ -1071,7 +1145,7 @@
                 case 'restrictions':
                     const childData = children.find(c => c.id === currentChildId);
                     const childRestr = restrictions[currentChildId];
-                    
+
                     app.innerHTML = `
                         <div class="max-w-2xl mx-auto">
                             <button onclick="navigateTo('home')" class="mb-8 neu-btn px-6 py-3 rounded-xl text-pizarra font-bold flex items-center w-max"><i class="fa-solid fa-arrow-left mr-2"></i> Volver</button>
@@ -1183,7 +1257,7 @@
 
                 case 'recharge':
                     const rechargeChild = children.find(c => c.id === currentChildId);
-                    
+
                     app.innerHTML = `
                         <div class="max-w-2xl mx-auto py-12">
                             <div class="neu-convex p-12 text-center">
@@ -1216,12 +1290,12 @@
                     const activeChildCant = children.find(c => c.id === currentChildId);
                     const activeRestr = restrictions[currentChildId];
                     const schoolProducts = productsBySchool[activeChildCant.school] || [];
-                    
+
                     let activeBadges = [];
-                    if(activeRestr.noTacc) activeBadges.push('SIN TACC');
-                    if(activeRestr.noSugar) activeBadges.push('SIN AZÚCAR');
-                    if(activeRestr.noPeanuts) activeBadges.push('SIN MANÍ');
-                    if(activeRestr.vegan) activeBadges.push('VEGANO');
+                    if (activeRestr.noTacc) activeBadges.push('SIN TACC');
+                    if (activeRestr.noSugar) activeBadges.push('SIN AZÚCAR');
+                    if (activeRestr.noPeanuts) activeBadges.push('SIN MANÍ');
+                    if (activeRestr.vegan) activeBadges.push('VEGANO');
 
                     app.innerHTML = `
                         ${modalHTML}
@@ -1296,7 +1370,7 @@
                         </div>
                     `;
 
-                    updateSliderVisuals(); 
+                    updateSliderVisuals();
                     renderCanteenGrid();
                     break;
 
@@ -1307,7 +1381,7 @@
                         }
                         return sum;
                     }, 0);
-                    
+
                     const groupedCart = cart.reduce((acc, item) => {
                         if (!acc[item.childId]) acc[item.childId] = [];
                         acc[item.childId].push(item);
@@ -1316,7 +1390,7 @@
 
                     const todayStr = getTodayString();
                     const cartWarnings = getBalanceWarnings();
-                    
+
                     const cartWarningsHTML = cartWarnings.length > 0 ? `
                         <div class="neu-concave p-6 rounded-3xl mb-8 border border-melocoton/30">
                             <h4 class="font-bold text-melocoton flex items-center gap-2 mb-3"><i class="fa-solid fa-triangle-exclamation"></i> Atención: Saldo en negativo</h4>
@@ -1342,12 +1416,12 @@
                                         <button onclick="navigateTo('home')" class="mt-8 btn-dorado px-8 py-3 rounded-xl font-bold">Ir a comprar</button>
                                     </div>
                                 ` : Object.keys(groupedCart).map(childId => {
-                                    const child = children.find(c => c.id == childId);
-                                    const childItems = groupedCart[childId];
-                                    const checkoutData = cartCheckoutData[childId] || { selected: true, date: getNextValidDateStr(), breakTime: '1er Recreo' };
-                                    const childSubtotal = childItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-                                    
-                                    return `
+                        const child = children.find(c => c.id == childId);
+                        const childItems = groupedCart[childId];
+                        const checkoutData = cartCheckoutData[childId] || { selected: true, date: getNextValidDateStr(), breakTime: '1er Recreo' };
+                        const childSubtotal = childItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+                        return `
                                         <div class="neu-convex overflow-hidden transition-all ${!checkoutData.selected ? 'opacity-50 grayscale-[0.8]' : ''}">
                                             
                                             <div class="px-8 py-6 flex items-center justify-between cursor-pointer border-b border-gray-300/30" onclick="toggleCartChild(${childId})">
@@ -1404,7 +1478,7 @@
                                             </div>
                                         </div>
                                     `;
-                                }).join('')}
+                    }).join('')}
                             </div>
                             
                             <div class="space-y-6">
@@ -1414,17 +1488,17 @@
                                     
                                     <div class="space-y-4 mb-8">
                                         ${Object.keys(groupedCart).map(childId => {
-                                            const child = children.find(c => c.id == childId);
-                                            const checkoutData = cartCheckoutData[childId];
-                                            if (!checkoutData || !checkoutData.selected) return ''; 
-                                            const childSubtotal = groupedCart[childId].reduce((sum, item) => sum + (item.price * item.quantity), 0);
-                                            return `
+                        const child = children.find(c => c.id == childId);
+                        const checkoutData = cartCheckoutData[childId];
+                        if (!checkoutData || !checkoutData.selected) return '';
+                        const childSubtotal = groupedCart[childId].reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                        return `
                                                 <div class="flex justify-between items-center text-sm font-bold text-texto-claro">
                                                     <span>${child.name}</span>
                                                     <span class="text-texto-oscuro text-base">$${childSubtotal.toLocaleString('es-AR')}</span>
                                                 </div>
                                             `;
-                                        }).join('')}
+                    }).join('')}
                                         ${!isAnythingSelected && cart.length > 0 ? '<p class="text-sm text-texto-claro italic font-medium">No hay pedidos seleccionados.</p>' : ''}
                                     </div>
                                     
@@ -1454,7 +1528,7 @@
                         if (cartCheckoutData[item.childId] && cartCheckoutData[item.childId].selected) return sum + (item.price * item.quantity);
                         return sum;
                     }, 0);
-                    
+
                     const confirmGroupedCart = cart.reduce((acc, item) => {
                         if (cartCheckoutData[item.childId] && cartCheckoutData[item.childId].selected) {
                             if (!acc[item.childId]) acc[item.childId] = [];
@@ -1489,9 +1563,9 @@
                                     </h4>
                                     
                                     ${Object.keys(confirmGroupedCart).map(childId => {
-                                        const child = children.find(c => c.id == childId);
-                                        const cData = cartCheckoutData[childId];
-                                        return `
+                        const child = children.find(c => c.id == childId);
+                        const cData = cartCheckoutData[childId];
+                        return `
                                             <div class="neu-concave p-6">
                                                 <div class="flex justify-between items-start border-b border-gray-300/40 pb-4 mb-4">
                                                     <div>
@@ -1509,7 +1583,7 @@
                                                 </div>
                                             </div>
                                         `;
-                                    }).join('')}
+                    }).join('')}
                                     
                                     <div class="border-t border-gray-300/40 pt-8 flex justify-between items-center">
                                         <span class="text-texto-claro font-bold uppercase tracking-widest text-sm">Total a Pagar</span>
@@ -1578,4 +1652,5 @@
     </script>
 
 </body>
+
 </html>
