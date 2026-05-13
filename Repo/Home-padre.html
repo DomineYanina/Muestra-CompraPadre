@@ -24,6 +24,7 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
         :root {
             /* Variables para las sombras neumórficas calculadas sobre el #F0F4F8 */
@@ -166,6 +167,22 @@
             box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light);
             cursor: pointer;
         }
+
+        /* ANIMACIÓN SCANNER IA */
+        @keyframes scan {
+            0% { top: 0; }
+            50% { top: 100%; }
+            100% { top: 0; }
+        }
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            background-color: var(--dorado);
+            box-shadow: 0 0 10px var(--dorado), 0 0 20px var(--dorado);
+            animation: scan 3s linear infinite;
+            z-index: 10;
+        }
     </style>
 </head>
 <body class="min-h-screen relative pb-12">
@@ -177,6 +194,7 @@
     <nav id="main-nav" class="bg-pizarra text-white sticky top-0 z-40 shadow-xl h-16 flex items-center px-4 md:px-8 justify-between transition-opacity duration-300 mb-8">
         <div class="flex items-center gap-4">
             <div onclick="navigateTo('home')" class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
+                <!-- Se actualizó la foto y los colores del avatar de fallback -->
                 <img src="./logo.png" alt="Logo Recred" class="h-10 w-auto object-contain" onerror="this.src='https://ui-avatars.com/api/?name=RC&background=F2B705&color=4A6FA5&rounded=true'">
                 <span class="font-urbanist font-bold text-2xl tracking-tight text-dorado hidden sm:inline">RECRED</span>
             </div>
@@ -258,6 +276,7 @@
             '2026-09-21', '2026-10-12', '2026-11-20'
         ];
 
+        // Mantenemos las rutas de imágenes relativas/locales originales
         const children = [
             { id: 1, name: "Julián García", year: "4to Año A", school: "Instituto San José", balance: 2580, img: "./julian.avif" },
             { id: 2, name: "Sofía García", year: "1er Año B", school: "Instituto San José", balance: 1200, img: "./sofia.webp" },
@@ -266,18 +285,18 @@
 
         const productsBySchool = {
             "Instituto San José": [
-                { id: 101, name: "Sándwich de Jamón y Queso", category: "Comidas", price: 1200, hasTacc: true, hasSugar: false, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=300&q=80" },
-                { id: 102, name: "Cookies de Chocolate y Maní", category: "Snacks", price: 850, hasTacc: true, hasSugar: true, hasPeanuts: true, isVegan: false, img: "https://images.unsplash.com/photo-1499636136210-65425fb6a5c7?auto=format&fit=crop&w=300&q=80" },
+                { id: 101, name: "Sándwich de Jamón y Queso", category: "Comidas", price: 1200, hasTacc: true, hasSugar: false, hasPeanuts: false, isVegan: false, img: "./Sandwich Jamón y queso.jfif" },
+                { id: 102, name: "Cookies de Chocolate y Maní", category: "Snacks", price: 850, hasTacc: true, hasSugar: true, hasPeanuts: true, isVegan: false, img: "./Cookies de Chocolate y Maní.jpg" },
                 { id: 103, name: "Manzana Roja", category: "Snacks", price: 300, hasTacc: false, hasSugar: false, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=300&q=80" },
                 { id: 104, name: "Jugo de Naranja", category: "Bebidas", price: 600, hasTacc: false, hasSugar: true, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1613478223719-2ab802602423?auto=format&fit=crop&w=300&q=80" },
-                { id: 107, name: "Empanada de Carne", category: "Comidas", price: 900, hasTacc: true, hasSugar: false, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=300&q=80" }
+                { id: 107, name: "Empanada de Carne", category: "Comidas", price: 900, hasTacc: true, hasSugar: false, hasPeanuts: false, isVegan: false, img: "./empanada de carne.webp" }
             ],
             "Colegio Santa María": [
                 { id: 201, name: "Hamburguesa Completa", category: "Comidas", price: 2500, hasTacc: true, hasSugar: false, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=300&q=80" },
                 { id: 202, name: "Ensalada Fresca", category: "Comidas", price: 1800, hasTacc: false, hasSugar: false, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1550304943-4f24f54ddde9?auto=format&fit=crop&w=300&q=80" },
-                { id: 203, name: "Agua Mineral", category: "Bebidas", price: 500, hasTacc: false, hasSugar: false, hasPeanuts: false, isVegan: true, img: "https://images.unsplash.com/photo-1525059696034-4967a8e1dca2?auto=format&fit=crop&w=300&q=80" },
-                { id: 204, name: "Barrita de Cereal Mix", category: "Snacks", price: 500, hasTacc: true, hasSugar: true, hasPeanuts: true, isVegan: true, img: "https://images.unsplash.com/photo-1622467820202-0ca336495914?auto=format&fit=crop&w=300&q=80" },
-                { id: 205, name: "Yogurt con Frutas", category: "Snacks", price: 950, hasTacc: false, hasSugar: true, hasPeanuts: false, isVegan: false, img: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=300&q=80" }
+                { id: 203, name: "Agua Mineral", category: "Bebidas", price: 500, hasTacc: false, hasSugar: false, hasPeanuts: false, isVegan: true, img: "./agua mineral.jpg" },
+                { id: 204, name: "Barrita de Cereal Mix", category: "Snacks", price: 500, hasTacc: true, hasSugar: true, hasPeanuts: true, isVegan: true, img: "./barrita de cereal mix.webp" },
+                { id: 205, name: "Yogurt con Frutas", category: "Snacks", price: 950, hasTacc: false, hasSugar: true, hasPeanuts: false, isVegan: false, img: "./yogur con frutas.jpg" }
             ]
         };
 
@@ -530,13 +549,13 @@
 
         function toggleItemRestriction(productId) {
             const blockedArray = specificItemRestrictions[currentChildId];
-            const index = blockedArray.indexOf(productId);
+            const index = blockedArray.indexOf(parseInt(productId));
             
             if (index > -1) {
                 blockedArray.splice(index, 1);
                 showNotification("Restricción individual eliminada.");
             } else {
-                blockedArray.push(productId);
+                blockedArray.push(parseInt(productId));
                 showNotification("Ítem restringido manualmente.", true);
                 removeFromCart(productId, currentChildId);
                 if (pendingMenuQuantities[productId]) {
@@ -598,7 +617,7 @@
                         <div class="relative h-32 shrink-0 neu-concave p-2 mb-4">
                             <img src="${p.img}" class="w-full h-full object-cover rounded-lg" alt="${p.name}">
                             
-                            <button onclick="toggleItemRestriction(${p.id})" class="absolute top-3 left-3 w-8 h-8 rounded-full ${isSpecificallyBlocked ? 'neu-concave text-melocoton' : 'neu-btn text-texto-claro hover:text-melocoton'} flex items-center justify-center z-10" title="${isSpecificallyBlocked ? 'Desbloquear ítem' : 'Restringir ítem'}">
+                            <button onclick="toggleItemRestriction(${p.id})" class="pointer-events-auto absolute top-3 left-3 w-8 h-8 rounded-full ${isSpecificallyBlocked ? 'neu-concave text-melocoton' : 'neu-btn text-texto-claro hover:text-melocoton'} flex items-center justify-center z-10" title="${isSpecificallyBlocked ? 'Desbloquear ítem' : 'Restringir ítem'}">
                                 <i class="fa-solid ${isSpecificallyBlocked ? 'fa-lock' : 'fa-lock-open'} text-sm"></i>
                             </button>
 
@@ -776,7 +795,7 @@
             const app = document.getElementById('app');
             const mainNav = document.getElementById('main-nav');
             
-            if (['intro1', 'intro2', 'intro3'].includes(currentView)) {
+            if (['intro1', 'intro2', 'intro3', 'roadmap'].includes(currentView)) {
                 mainNav.style.display = 'none';
             } else {
                 mainNav.style.display = 'flex';
@@ -864,7 +883,7 @@
                                 </div>
                             </div>
                             
-                            <div class="shrink-0 mt-6 pt-4">
+                            <div class="shrink-0 mt-6 pt-4 border-t border-gray-300/30">
                                 <div class="flex justify-between items-center mb-6 px-2">
                                     <span class="text-texto-claro font-bold uppercase tracking-wider text-xs">Total de la Orden</span>
                                     <span class="text-3xl font-black text-pizarra">$${p.total.toLocaleString('es-AR')}</span>
@@ -922,6 +941,7 @@
                     break;
 
                 case 'intro3':
+                    // --- AQUÍ ESTÁ EL CAMBIO SOLICITADO: BOTÓN "INGRESAR A LA PLATAFORMA" EN INTRO 3 ---
                     app.innerHTML = `
                         <div class="min-h-[85vh] flex flex-col items-center justify-center slide-anim">
                             <div class="max-w-3xl w-full">
@@ -951,60 +971,101 @@
                 case 'roadmap':
                     app.innerHTML = `
                         <div class="max-w-5xl mx-auto py-8 slide-anim">
-                            <div class="text-center mb-12">
-                                <h2 class="text-4xl font-black text-pizarra mb-4 tracking-tight">El futuro de <span class="text-dorado">RECRED</span></h2>
-                                <p class="text-texto-claro text-lg font-medium">Llevando la gestión escolar al próximo nivel con Inteligencia Artificial</p>
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
+                                <div>
+                                    <h2 class="text-4xl font-black text-pizarra tracking-tight flex items-center gap-3">
+                                        <i class="fa-solid fa-wand-magic-sparkles text-dorado"></i> Próximamente en RECRED
+                                    </h2>
+                                    <p class="text-texto-claro text-lg font-medium mt-1">Ecosistema potenciado por Inteligencia Artificial</p>
+                                </div>
+                                <button onclick="navigateTo('home')" class="neu-btn px-6 py-3 rounded-xl text-pizarra font-bold flex items-center gap-2 w-max"><i class="fa-solid fa-house"></i> Ingresar a la Plataforma</button>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-                                <!-- Card 1: IA Carga -->
-                                <div class="neu-convex rounded-3xl p-8 flex flex-col">
-                                    <div class="w-16 h-16 neu-concave text-pizarra rounded-full flex items-center justify-center text-3xl mb-6">
-                                        <i class="fa-solid fa-camera"></i>
+                            <!-- MOCKUP 1: Carga Visual -->
+                            <div class="neu-convex rounded-3xl p-8 mb-10 border border-white/50">
+                                <h3 class="text-2xl font-bold text-texto-oscuro mb-6 flex items-center gap-3"><i class="fa-solid fa-camera text-pizarra"></i> Carga Ágil <span class="text-sm font-medium text-texto-claro hidden sm:inline">(Para Kiosqueros)</span></h3>
+                                
+                                <div class="flex flex-col md:flex-row gap-8 items-stretch">
+                                    <!-- Celular escaneando e Input manual -->
+                                    <div class="neu-concave p-5 rounded-3xl md:w-1/2 flex flex-col items-center relative overflow-hidden">
+                                        <div class="w-full h-56 bg-gray-200 rounded-xl overflow-hidden relative border-[6px] border-pizarra/10 shadow-inner">
+                                            <img src="./Cookies de Chocolate y Maní.jpg" class="w-full h-full object-cover opacity-90 filter contrast-125" alt="Galletitas" onerror="this.src='https://images.unsplash.com/photo-1499636136210-65425fb6a5c7?auto=format&fit=crop&w=400&q=80'">
+                                            <div class="absolute inset-0 border-2 border-dashed border-dorado/80 m-6 rounded-lg"></div>
+                                            <!-- Línea animada -->
+                                            <div class="scan-line"></div>
+                                            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 bg-pizarra text-white text-[10px] font-bold px-4 py-1.5 rounded-full shadow-lg flex items-center gap-2 tracking-widest uppercase whitespace-nowrap"><i class="fa-solid fa-microchip animate-pulse"></i> Analizando...</div>
+                                        </div>
+                                        
+                                        <!-- Input para carga manual -->
+                                        <div class="w-full mt-4 relative">
+                                            <i class="fa-solid fa-keyboard absolute left-4 top-1/2 -translate-y-1/2 text-texto-claro"></i>
+                                            <input type="text" placeholder="O ingresa el nombre a mano..." class="w-full pl-10 pr-4 py-3 neu-convex outline-none text-sm font-bold text-texto-oscuro placeholder-texto-claro">
+                                        </div>
                                     </div>
-                                    <h3 class="text-2xl font-bold text-texto-oscuro mb-4">Carga Visual de Productos</h3>
-                                    <p class="text-texto-claro mb-8 leading-relaxed flex-grow">
-                                        Adiós a la carga manual. El kiosquero tomará una foto del producto y nuestra IA de <strong class="text-pizarra">Computer Vision</strong> extraerá el nombre, marca y valores nutricionales automáticamente. El usuario solo revisa, edita si es necesario, y aprueba.
-                                    </p>
-                                    <div class="neu-concave p-4 rounded-xl flex items-center justify-center gap-4">
-                                        <i class="fa-solid fa-camera text-texto-claro text-xl"></i>
-                                        <i class="fa-solid fa-arrow-right text-texto-claro text-xs"></i>
-                                        <i class="fa-solid fa-wand-magic-sparkles text-dorado text-xl"></i>
-                                        <i class="fa-solid fa-arrow-right text-texto-claro text-xs"></i>
-                                        <i class="fa-solid fa-check text-menta text-xl"></i>
-                                    </div>
-                                </div>
 
-                                <!-- Card 2: Recomendaciones -->
-                                <div class="neu-convex rounded-3xl p-8 flex flex-col">
-                                    <div class="w-16 h-16 neu-concave text-dorado rounded-full flex items-center justify-center text-3xl mb-6">
-                                        <i class="fa-solid fa-brain"></i>
-                                    </div>
-                                    <h3 class="text-2xl font-bold text-texto-oscuro mb-4">Motor de Recomendaciones</h3>
-                                    <p class="text-texto-claro mb-6 leading-relaxed">
-                                        Un ecosistema inteligente con <strong class="text-dorado">Machine Learning</strong> para cada rol:
-                                    </p>
-                                    <div class="space-y-4 flex-grow">
-                                        <div class="neu-concave p-4 rounded-xl border border-transparent hover:border-pizarra/20 transition-all">
-                                            <h4 class="font-bold text-pizarra text-sm mb-1"><i class="fa-solid fa-store mr-1"></i> Para Kiosqueros</h4>
-                                            <p class="text-xs text-texto-oscuro font-medium">Análisis predictivo de ventas zonales para sugerir qué stock reponer y qué nuevos productos son tendencia.</p>
+                                    <!-- Formulario Autocompletado -->
+                                    <div class="md:w-1/2 flex flex-col justify-center gap-5">
+                                        <div class="neu-concave p-5 rounded-2xl relative">
+                                            <div class="absolute -top-3 -right-3 w-8 h-8 bg-dorado rounded-full flex items-center justify-center text-texto-oscuro shadow-lg shadow-dorado/30"><i class="fa-solid fa-bolt"></i></div>
+                                            <label class="text-[10px] text-texto-claro font-bold uppercase tracking-widest mb-1 block">Producto detectado</label>
+                                            <p class="font-bold text-texto-oscuro text-xl">Cookies de Chocolate y Maní</p>
                                         </div>
-                                        <div class="neu-concave p-4 rounded-xl border border-transparent hover:border-dorado/30 transition-all">
-                                            <h4 class="font-bold text-dorado text-sm mb-1"><i class="fa-regular fa-calendar-check mr-1"></i> Hábitos y Recordatorios</h4>
-                                            <p class="text-xs text-texto-oscuro font-medium"><i>"¡Es martes! No olvides la Coca y el Alfajor de siempre"</i>. Facilita la compra recurrente a los padres.</p>
+                                        
+                                        <div class="neu-concave p-5 rounded-2xl">
+                                            <label class="text-[10px] text-texto-claro font-bold uppercase tracking-widest mb-3 block">Análisis Nutricional Extraído</label>
+                                            <div class="flex flex-wrap gap-2.5">
+                                                <span class="bg-melocoton text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm flex items-center gap-1.5"><i class="fa-solid fa-wheat-awn-circle-exclamation"></i> CON TACC</span>
+                                                <span class="bg-melocoton text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm flex items-center gap-1.5"><i class="fa-solid fa-cubes-stacked"></i> ALTO EN AZÚCAR</span>
+                                                <span class="bg-pizarra text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm flex items-center gap-1.5"><i class="fa-solid fa-seedling"></i> CONTIENE MANÍ</span>
+                                            </div>
                                         </div>
-                                        <div class="neu-concave p-4 rounded-xl border border-transparent hover:border-menta/30 transition-all">
-                                            <h4 class="font-bold text-menta text-sm mb-1"><i class="fa-solid fa-apple-whole mr-1"></i> Salud Proactiva</h4>
-                                            <p class="text-xs text-texto-oscuro font-medium">Alerta de patrones de consumo altos en azúcar y sugiere alternativas saludables del menú escolar.</p>
+                                        
+                                        <div class="flex gap-3 mt-auto pt-2">
+                                            <button class="neu-btn text-texto-claro hover:text-pizarra font-bold py-4 rounded-xl w-1/3 flex items-center justify-center gap-2"><i class="fa-solid fa-pen"></i> Modificar</button>
+                                            <button class="neu-btn text-menta font-bold py-4 rounded-xl w-2/3 flex items-center justify-center gap-2"><i class="fa-solid fa-check-double text-lg"></i> Confirmar</button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            
-                            <div class="text-center">
-                                <button onclick="navigateTo('home')" class="neu-btn text-texto-oscuro font-bold py-4 px-12 rounded-2xl flex items-center justify-center gap-2 mx-auto">
-                                    <i class="fa-solid fa-arrow-left"></i> Volver a la Plataforma
-                                </button>
+
+                            <!-- MOCKUP 2: Notificaciones Inteligentes -->
+                            <div class="neu-convex rounded-3xl p-8 border border-white/50">
+                                <h3 class="text-2xl font-bold text-texto-oscuro mb-6 flex items-center gap-3"><i class="fa-solid fa-brain text-dorado"></i> Sugerencias</h3>
+                                
+                                <div class="grid grid-cols-1 gap-6">
+                                    <!-- Notificación Padre (Hábito) -->
+                                    <div class="neu-btn p-6 rounded-2xl flex flex-col sm:flex-row sm:items-center gap-5 border-l-4 border-dorado cursor-default relative overflow-hidden text-left">
+                                        <div class="absolute right-0 top-0 opacity-[0.03] text-8xl -mt-4 -mr-4 text-dorado"><i class="fa-solid fa-calendar-check"></i></div>
+                                        <div class="w-14 h-14 neu-concave rounded-full flex items-center justify-center text-dorado text-2xl shrink-0 z-10"><i class="fa-regular fa-bell"></i></div>
+                                        <div class="flex-grow z-10">
+                                            <p class="text-[10px] font-bold text-texto-claro uppercase tracking-widest mb-1">Patrón detectado de Sofía</p>
+                                            <p class="font-bold text-texto-oscuro text-lg leading-tight">¡Es Martes! ¿Agregamos el combo habitual de Sofía?</p>
+                                        </div>
+                                        <button class="btn-dorado font-bold px-4 py-3 rounded-xl z-10 text-sm whitespace-nowrap mt-2 sm:mt-0 w-full sm:w-48 flex items-center justify-center"><i class="fa-solid fa-cart-plus mr-1"></i> Agregar (1 clic)</button>
+                                    </div>
+
+                                    <!-- Notificación Salud (Mateo) -->
+                                    <div class="neu-btn p-6 rounded-2xl flex flex-col sm:flex-row sm:items-center gap-5 border-l-4 border-menta cursor-default relative overflow-hidden text-left">
+                                        <div class="absolute right-0 top-0 opacity-[0.03] text-8xl -mt-4 -mr-4 text-menta"><i class="fa-solid fa-apple-whole"></i></div>
+                                        <div class="w-14 h-14 neu-concave rounded-full flex items-center justify-center text-menta text-2xl shrink-0 z-10"><i class="fa-solid fa-lightbulb"></i></div>
+                                        <div class="flex-grow z-10">
+                                            <p class="text-[10px] font-bold text-texto-claro uppercase tracking-widest mb-1">Cuidando a Mateo</p>
+                                            <p class="font-bold text-texto-oscuro text-lg leading-tight">Notamos consumos altos en azúcar. ¿Ofrecer Manzana hoy?</p>
+                                        </div>
+                                        <button class="neu-convex border border-menta text-menta font-bold px-4 py-3 rounded-xl hover:bg-menta hover:text-white transition-colors z-10 text-sm whitespace-nowrap mt-2 sm:mt-0 w-full sm:w-48 flex items-center justify-center"><i class="fa-solid fa-arrows-rotate mr-1"></i> Ir a comprar</button>
+                                    </div>
+
+                                    <!-- Notificación Kiosquero (Tendencias) -->
+                                    <div class="neu-btn p-6 rounded-2xl flex flex-col sm:flex-row sm:items-center gap-5 border-l-4 border-pizarra cursor-default relative overflow-hidden text-left">
+                                        <div class="absolute right-0 top-0 opacity-[0.03] text-8xl -mt-4 -mr-4 text-pizarra"><i class="fa-solid fa-chart-line"></i></div>
+                                        <div class="w-14 h-14 neu-concave rounded-full flex items-center justify-center text-pizarra text-2xl shrink-0 z-10"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                                        <div class="flex-grow z-10">
+                                            <p class="text-[10px] font-bold text-texto-claro uppercase tracking-widest mb-1">Dashboard Kiosquero</p>
+                                            <p class="font-bold text-texto-oscuro text-lg leading-tight">El calor aumentó la venta de Jugo en un 40%. Sugerimos reponer stock.</p>
+                                        </div>
+                                        <button class="bg-pizarra text-white font-bold px-4 py-3 rounded-xl shadow-md hover:opacity-90 transition-opacity z-10 text-sm whitespace-nowrap mt-2 sm:mt-0 w-full sm:w-48 flex items-center justify-center"><i class="fa-solid fa-box-open mr-1"></i> Ver inventario</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     `;
